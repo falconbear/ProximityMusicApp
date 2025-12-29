@@ -603,7 +603,6 @@ class PlayerPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final nowPlaying = ref.watch(nowPlayingProvider);
-    final queue = ref.watch(queueProvider);
     final isPlaying = ref.watch(isPlayingProvider);
     final position = ref.watch(positionProvider);
     final duration = ref.watch(durationProvider);
@@ -922,9 +921,9 @@ class PlayerPage extends ConsumerWidget {
                       ),
                       
                       const SizedBox(height: 16),
-                ],
-              ),
-            ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),

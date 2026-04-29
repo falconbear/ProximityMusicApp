@@ -261,6 +261,7 @@ def cmd_approve_contract(args: argparse.Namespace) -> int:
         die(f"approve-contract requires CONTRACT_REVIEW, current={state['current_state']}")
     state = transition(state, "CONTRACT_APPROVED", args.actor)
     atomic_write_json(state_path(args.issue_id), state)
+    _lock_contract(args.issue_id)
     append_event(
         args.issue_id,
         args.actor,
@@ -270,6 +271,26 @@ def cmd_approve_contract(args: argparse.Namespace) -> int:
         data={"feedback_ref": args.feedback_ref},
     )
     print("CONTRACT_APPROVED")
+    return 0
+
+
+def _lock_contract(issue_id: str) -> None:
+    contract_p = work_dir(issue_id) / "contract.json"
+    if not contract_p.exists():
+        return
+    contract = json.loads(contract_p.read_text(encoding="utf-8"))
+    if contract.get("locked") is True:
+        return
+    contract["locked"] = True
+    atomic_write_json(contract_p, contract)
+
+
+def cmd_lock_contract(args: argparse.Namespace) -> int:
+    contract_p = work_dir(args.issue_id) / "contract.json"
+    if not contract_p.exists():
+        die(f"no contract.json for issue {args.issue_id}")
+    _lock_contract(args.issue_id)
+    print(f"locked {contract_p}")
     return 0
 
 
@@ -624,6 +645,13 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["PLANNED", "CONTRACT_REVIEW", "READY_FOR_REVIEW", "NEEDS_FIX"],
     )
     q.set_defaults(func=cmd_unblock)
+
+    q = sub.add_parser(
+        "lock-contract",
+        help="set contract.json locked=true (idempotent backfill for harness bug fix)",
+    )
+    _add_issue(q)
+    q.set_defaults(func=cmd_lock_contract)
 
     q = sub.add_parser("set-pr", help="set PR number / project item id")
     _add_issue(q)

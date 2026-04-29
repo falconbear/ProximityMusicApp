@@ -1,0 +1,1 @@
+{"ts": "2026-04-29T10:25:56Z", "actor": "controller", "event": "issue_initialized", "issue_id": "5", "data": {"title": "P2P 楽曲転送 (チャンク受信 + 暗号化 + 整合性)", "branch": "sprint/05-p2p-transfer"}}

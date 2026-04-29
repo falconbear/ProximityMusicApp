@@ -1,0 +1,38 @@
+# Validate .ai/work/<issue-id>/*.json against schemas/.
+#
+# Single Source of Truth = state.json, written only by bin/controller.py.
+# This workflow re-runs bin/validate-state.py in CI to catch hand-edits or
+# direct writes that bypass the controller. Failure blocks the PR.
+
+name: state-validate
+
+on:
+  pull_request:
+    paths:
+      - '.ai/work/**/*.json'
+      - 'schemas/**/*.json'
+      - 'bin/validate-state.py'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install jsonschema
+        run: pip install jsonschema
+
+      - name: Validate all issue state files
+        run: |
+          if [ ! -d .ai/work ]; then
+            echo "no .ai/work/ directory yet — skipping"
+            exit 0
+          fi
+          if [ ! -x bin/validate-state.py ]; then
+            chmod +x bin/validate-state.py 2>/dev/null || true
+          fi
+          python3 bin/validate-state.py --strict

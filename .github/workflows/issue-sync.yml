@@ -1,0 +1,102 @@
+# Issue ↔ PR sync (referenced by skills/github-publishing/SKILL.md).
+#
+# One-way notification model: Issues are auto-created by planner, AI never
+# reads them back. This workflow keeps Issue lifecycle aligned with PR
+# lifecycle from the GitHub side (no AI involvement).
+#
+# Behaviors:
+#   - PR merged       -> linked Issues auto-close (GitHub native via "Closes #N")
+#   - PR reopened     -> linked Issues reopen
+#   - Label "needs-rework" added to a closed Issue -> reopen the Issue
+#   - Daily sweep     -> reopen Issues whose linked PR is open + has needs-rework
+
+name: issue-sync
+
+on:
+  pull_request:
+    types: [reopened, closed, labeled]
+  issues:
+    types: [labeled]
+  schedule:
+    - cron: '15 6 * * *'  # daily 06:15 UTC sweep
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  reopen-on-pr-reopen:
+    if: github.event_name == 'pull_request' && github.event.action == 'reopened'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.pull_request.body || "";
+            const re = /\b(?:closes|fixes|resolves)\s+#(\d+)/gi;
+            const ids = new Set();
+            let m;
+            while ((m = re.exec(body)) !== null) ids.add(parseInt(m[1], 10));
+            for (const num of ids) {
+              try {
+                await github.rest.issues.update({ ...context.repo, issue_number: num, state: 'open' });
+                core.info(`reopened issue #${num}`);
+              } catch (e) { core.warning(`#${num}: ${e.message}`); }
+            }
+
+  reopen-on-needs-rework-label:
+    if: |
+      (github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == 'needs-rework') ||
+      (github.event_name == 'issues' && github.event.action == 'labeled' && github.event.label.name == 'needs-rework')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            if (context.eventName === 'issues') {
+              await github.rest.issues.update({
+                ...context.repo,
+                issue_number: context.payload.issue.number,
+                state: 'open'
+              });
+              return;
+            }
+            const body = context.payload.pull_request.body || "";
+            const re = /\b(?:closes|fixes|resolves)\s+#(\d+)/gi;
+            const ids = new Set();
+            let m;
+            while ((m = re.exec(body)) !== null) ids.add(parseInt(m[1], 10));
+            for (const num of ids) {
+              try {
+                await github.rest.issues.update({ ...context.repo, issue_number: num, state: 'open' });
+              } catch (e) { core.warning(`#${num}: ${e.message}`); }
+            }
+
+  daily-sweep:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const prs = await github.paginate(github.rest.pulls.list, {
+              ...context.repo, state: 'open', per_page: 100
+            });
+            for (const pr of prs) {
+              const hasRework = pr.labels.some(l => l.name === 'needs-rework');
+              if (!hasRework) continue;
+              const body = pr.body || "";
+              const re = /\b(?:closes|fixes|resolves)\s+#(\d+)/gi;
+              let m;
+              while ((m = re.exec(body)) !== null) {
+                const num = parseInt(m[1], 10);
+                try {
+                  const issue = await github.rest.issues.get({ ...context.repo, issue_number: num });
+                  if (issue.data.state === 'closed') {
+                    await github.rest.issues.update({ ...context.repo, issue_number: num, state: 'open' });
+                    core.info(`reopened #${num} via daily sweep`);
+                  }
+                } catch (e) { core.warning(`#${num}: ${e.message}`); }
+              }
+            }

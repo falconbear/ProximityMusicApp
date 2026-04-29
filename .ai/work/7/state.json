@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "issue_id": "7",
+  "title": "バックグラウンド受信・再生 + メディア通知統合",
+  "branch": "sprint/07-background-mode",
+  "pr_number": null,
+  "project_item_id": null,
+  "current_state": "PLANNED",
+  "previous_state": null,
+  "last_transition_at": null,
+  "last_transition_by": null,
+  "contract_attempts": 0,
+  "attempts": 0,
+  "tdd": {
+    "red_commit_sha": null,
+    "green_commit_sha": null,
+    "refactor_commit_sha": null
+  },
+  "blocked_reason": null,
+  "blocked_note": null,
+  "timestamps": {
+    "created_at": "2026-04-29T10:25:56Z",
+    "updated_at": "2026-04-29T10:25:56Z"
+  }
+}

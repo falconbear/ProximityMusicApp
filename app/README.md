@@ -1,29 +1,84 @@
 # Proximity Music App (Flutter, mock UI)
 
-## 状態
-- Flutter/Dart が未インストールの環境想定。まず Flutter SDK を導入してください。
-- 現在はモックUIで、近接検知やオーディオ再生は未実装です。
+近接ベースの音楽交換 / 再生アプリの Flutter 実装 (現在はモック UI、近接通信は未実装)。
 
-## セットアップ（macOS）
-1) Flutterをインストール:  
-   - `brew install --cask flutter` もしくは公式手順でSDKを配置。  
-   - `flutter doctor` で依存を解消（Xcode / Android SDK / CocoaPods）。
-2) プロジェクト初期化:  
-   ```
-   cd proximity-music-app/app
-   flutter pub get
-   ```
-3) 実行:  
-   - iOSシミュレータ: `flutter run -d ios`  
-   - Androidエミュレータ: `flutter run -d android`
-   - 実機テストは近接API検証で必須。
+## クイックスタート
+
+リポジトリルートで:
+
+```bash
+./init.sh
+```
+
+`./init.sh` は冪等で、Flutter SDK が PATH にあれば `flutter pub get` / `flutter analyze` / `flutter test` を `app/` 配下で実行します。SDK が見つからない場合は警告を出して `exit 0` で終了します (CI 環境では `./init.sh --strict` を使うと SDK 不在時に `exit 1`)。
+
+## 起動方法
+
+### Web (Tailscale 経由でスマホからアクセスする場合)
+
+```bash
+cd app
+flutter run -d web-server --web-hostname 0.0.0.0 --web-port 8080
+```
+
+別ターミナルで Tailscale URL を表示:
+
+```bash
+bash bin/show-test-url.sh 8080
+```
+
+`--web-hostname 0.0.0.0` を必ず付けて全インターフェースで listen させてください (Tailscale 越し / 同一 LAN の別端末から開けるようになります)。
+
+### iOS / Android (実機検証)
+
+```bash
+flutter run -d ios       # iOS シミュレータ
+flutter run -d android   # Android エミュレータ
+```
+
+実機テストは近接 API の検証で必須。
+
+## テスト
+
+```bash
+cd app
+flutter test
+```
+
+CI (`.github/workflows/flutter-ci.yml`) は subosito/flutter-action を使い、push と pull_request の両方で `flutter pub get` / `dart format --set-exit-if-changed` / `flutter analyze` / `flutter test` を実行します。
+
+## ディレクトリ構成 (Issue #1 で導入した層分離)
+
+```
+app/lib/
+├── main.dart                                    # 16 行: runApp のみ + ProximityMusicApp の re-export
+├── app.dart                                     # ProximityMusicApp (MaterialApp.router + GoRouter)
+├── domain/
+│   └── entities/
+│       └── track.dart                           # Track entity (純 Dart)
+├── data/
+│   └── services/
+│       └── audio_service.dart                   # just_audio をラップ
+└── presentation/
+    ├── state/
+    │   └── providers.dart                       # Riverpod providers
+    ├── pages/
+    │   ├── dashboard_page.dart                  # ホーム画面
+    │   └── player_page.dart                     # 再生画面
+    └── widgets/
+        └── mini_player.dart                     # ボトムのミニプレイヤー
+```
+
+依存方向は `presentation → data → domain` の単方向。Domain は Flutter / Riverpod / just_audio / go_router を import しません。
 
 ## モックの使い方
-- ホーム画面で「Discovery」スイッチをONにし、FABの「受信をシミュレート」でキューに曲が追加されます。
-- Queue/Player画面でスキップやブロック(モック)の挙動を確認できます。
 
-## 次の実装ステップ（例）
-- 近接通信: Platform Channel経由で MultipeerConnectivity(iOS) / Nearby Connections(Android) のスパイク。
+- ホーム画面で「Discovery」スイッチを ON にし、FAB「Simulate Discovery」でキューに曲が追加されます。
+- AppBar 右の `queue_music` アイコンで Player 画面に遷移できます。
+
+## 次の実装ステップ
+
+- 近接通信: Platform Channel 経由で MultipeerConnectivity (iOS) / Nearby Connections (Android) のスパイク。
 - 再生: `just_audio` + `audio_service` でバックグラウンド再生を実装、モックキューと差し替え。
-- ストレージ: Hive/Driftでお気に入り・ブロックリスト・キューを永続化。
-- バックエンド: Cloud Run + Firestore/Cloud SQL で匿名ID/ブロックリスト/メトリクスAPIを用意し、Feature Flagで段階導入。
+- ストレージ: Hive / Drift でお気に入り・ブロックリスト・キューを永続化。
+- バックエンド: Cloud Run + Firestore / Cloud SQL で匿名 ID / ブロックリスト / メトリクス API を用意し、Feature Flag で段階導入。

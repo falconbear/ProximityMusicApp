@@ -1,0 +1,53 @@
+name: Flutter CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - 'sprint/**'
+      - 'feature/**'
+  pull_request:
+
+jobs:
+  flutter-ci:
+    name: Flutter pub get / format / analyze / test
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: app
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Show Flutter version
+        run: flutter --version
+
+      - name: flutter pub get
+        run: flutter pub get
+
+      - name: dart format check (warning only — CI does not fail on format diff)
+        # Format violations are surfaced as a warning so the PR still merges,
+        # but generators should run `dart format .` before commit. Tracked as
+        # an instinct in `.harness/instincts/generator/`.
+        continue-on-error: true
+        run: dart format --set-exit-if-changed --output=none .
+
+      - name: flutter analyze (errors + warnings only — info is non-fatal)
+        # The pre-Sprint-01 codebase has ~33 deprecation `info`s from
+        # Flutter 3.31+ (`withOpacity` → `withValues`, `activeColor` →
+        # `activeThumbColor`). These are not in scope of Sprint 01 and are
+        # info-level only; treat them as non-fatal so the gate stays at
+        # "no errors / no warnings" without forcing a deprecation sweep.
+        run: flutter analyze --no-fatal-infos
+
+      - name: flutter test
+        run: flutter test

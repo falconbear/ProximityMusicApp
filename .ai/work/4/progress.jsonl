@@ -1,0 +1,1 @@
+{"ts": "2026-04-29T10:25:56Z", "actor": "controller", "event": "issue_initialized", "issue_id": "4", "data": {"title": "匿名セッション確立 + ID ローテーション", "branch": "sprint/04-session-handshake"}}

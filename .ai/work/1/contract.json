@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0",
+  "issue_id": "1",
+  "status": "review",
+  "locked": true,
+  "approved_at": null,
+  "approved_by": null,
+  "scope": [
+    "リポジトリルートに冪等な init.sh を新設し、Flutter SDK の有無を検出・ガイドし、SDK があれば pub get / analyze / test を実行する。SDK が無くてもエラーで落ちず、不足を明示し exit 0 で終了する (CI 環境向けの厳密モード --strict は exit 1)。",
+    "init.sh は flutter run コマンド (web 起動 = `flutter run -d web-server --web-hostname 0.0.0.0 --web-port 8080`) を最後に説明として出力する (フォアグラウンド起動はオプション化、デフォルトは setup のみで終了する)。バインドは 0.0.0.0 を必須化し、起動例の URL に bin/show-test-url.sh 8080 を実行する旨を README に記載する。",
+    "app/lib/main.dart (1070 行) を Presentation / Domain / Data の 3 層に最小分割する。具体的には次のファイルへ責務を移す: app/lib/domain/entities/track.dart (Track) / app/lib/data/services/audio_service.dart (AudioService クラス) / app/lib/presentation/state/providers.dart (Riverpod Provider 定義群) / app/lib/presentation/pages/dashboard_page.dart (DashboardPage) / app/lib/presentation/pages/player_page.dart (PlayerPage) / app/lib/presentation/widgets/mini_player.dart (MiniPlayer) / app/lib/app.dart (ProximityMusicApp + GoRouter) / app/lib/main.dart (runApp のみ、20 行以下に縮小)。",
+    "新ファイル群はそれぞれ層を超えた逆向き依存をしない (Domain は他層を import しない / Data は Domain のみ参照可 / Presentation は Domain と Data を参照可)。dart import 上のルールとして守る。",
+    "GitHub Actions ワークフロー .github/workflows/flutter-ci.yml を新設し、Flutter プロジェクト (app/) に対し subosito/flutter-action@v2 を用いて (a) flutter pub get (b) dart format --set-exit-if-changed --output=none (c) flutter analyze (d) flutter test を実行する。push と pull_request の両方で発火する。既存の .github/workflows/ci.yml は触らない (harness 用なのでそのまま)。",
+    "app/test/ 配下に Domain ユニットテスト (track_test.dart) を新規追加する。Flutter SDK 非依存の最小テスト (Track の equality / toString 相当の振る舞い) を含む。既存の widget_test.dart は import パスのみ更新可 (DashboardPage / ProximityMusicApp の移動先) で、既存の expect は一切変更しない。",
+    "app/README.md と リポジトリルート README.md (もしくは新設) に ./init.sh の使い方、起動コマンド (`flutter run -d web-server --web-hostname 0.0.0.0 --web-port 8080` / iOS / Android)、テスト方法 (`flutter test`)、Tailscale 経由テスト時の `bash bin/show-test-url.sh 8080` 手順を記載する。",
+    "app/lib/main.dart の export 互換性を維持する: 既存の widget_test.dart が `package:proximity_music_app/main.dart` から ProximityMusicApp を解決できるよう、main.dart で `export 'app.dart';` を追加するか、widget_test.dart の import を新パスに更新する (どちらでも可、決定は generator が行う)。",
+    "【既存 widget_test.dart 整合性のための文言調整】既存 widget_test.dart は ProximityMusicApp に対して `find.text('Proximity Music')` / `find.text('Discovery Paused')` (Discovery off 時) / `find.text('Discovery Active')` (Discovery on 時) / `find.text('Player')` / `find.text('再生コントロール')` の存在を要求する。現 main.dart はこれらの文字列をレンダリングしておらず、import 更新だけでは既存 3 ケースは green にならないため、Presentation 層リファクタの一環として以下の表示文字列を新ファイルで揃える:\n  (i) DashboardPage の AppBar title を `'Proximity Music'` を可視文字列としてレンダーする (例: `AppBar(title: const Text('Proximity Music'))`、絵文字版 `'🎵 Proximity'` は廃止または併記)。\n  (ii) DashboardPage の Discovery 状態テキストを `discoveryOn ? 'Discovery Active' : 'Discovery Paused'` に変更する (現 `'Discovery Mode'` を廃止)。\n  (iii) PlayerPage に `'Player'` 見出し (Text) と `'再生コントロール'` セクション見出し (Text) を追加し、両方が widget tree 上に Text として存在する状態にする。\n  この変更は既存テストを壊さないために必要な最小調整であり、out_of_scope[3] 「テーマ / カラー / UI 文言の変更」の **例外** として本契約で明示的に許可する。"
+  ],
+  "out_of_scope": [
+    "新機能の実装 (近接検知、セッション、転送、オンボーディング、設定画面など) — 別 Issue。",
+    "Native (iOS / Android) ビルドの container 内検証 — Flutter SDK が container に無い前提。CI 上での Flutter web build もスコープ外 (test と analyze のみ)。",
+    "完全なクリーンアーキテクチャ準拠 (UseCase 層 / Repository インタフェース化 / DI コンテナの明示化など) — 最小分割に留める。",
+    "テーマ / カラー / UI 文言の変更 — 既存ダーク UI のまま (ただし scope[9] で列挙した 5 文字列 'Proximity Music' / 'Discovery Paused' / 'Discovery Active' / 'Player' / '再生コントロール' を Presentation 層に追加・調整する作業のみは scope に含む例外とする)。",
+    "既存テストのアサーション緩和、削除、.skip 追加 (test-integrity スキルにより禁止)。expect の文字列を変更することも不可、本契約での scope[9] による調整は **テスト側ではなく実装 (main.dart → 新 Presentation 層) 側を直す** 方針である。",
+    "Platform Channels / Pigeon の追加 (Issue #3 の範囲)。",
+    "状態管理ライブラリの差し替え (Riverpod のまま)。",
+    "ローカルストレージ (Hive / Drift / flutter_secure_storage) の導入 — 後続 Issue で扱う。",
+    "Track クラスのフィールド構造変更 (現状の id / title / artist / 等のフィールド組成は変更しない)。equality / hashCode / toString の override 追加のみ scope[10] で許可する。",
+    "【Domain 充実化】Track クラスに `==` / `hashCode` / `toString` の override を追加する (Issue #5 の同一楽曲重複判定の前段階。フィールド比較ベースの equality を実装する)。これにより criterion #10 の 2 ケース要件が equality 検証を含む実意味あるものになる。"
+  ],
+  "success_criteria": [
+    "リポジトリルートで `./init.sh` を 2 回連続実行しても、両方とも exit 0 で終了し、後続実行時に冪等でない破壊的状態 (lockfile の壊れ / 二重 git config 等) を作らない。",
+    "Flutter SDK が PATH に存在しない環境で `./init.sh` を実行すると、exit 0 で終わり、stderr/stdout に 'Flutter SDK not found. See https://docs.flutter.dev/get-started/install' を含む案内文を出す (`./init.sh --strict` の場合のみ exit 1)。",
+    "Flutter SDK が PATH に存在する環境で `./init.sh` を実行すると、`flutter pub get` (app/ 配下で実行)、`flutter analyze` (app/ 配下)、`flutter test` (app/ 配下) が順に走り、すべてが成功する。失敗時は exit 1。",
+    "`./init.sh` の最後に「サーバ起動方法: cd app && flutter run -d web-server --web-hostname 0.0.0.0 --web-port 8080」「Tailscale URL: bash bin/show-test-url.sh 8080」を 1 行ずつ標準出力に表示する (Flutter SDK 有無に関係なく案内のみ表示)。",
+    "app/lib/main.dart の行数が 30 行以下になっている (runApp 呼び出し + import + 1 行の export または最小 main 関数のみ)。",
+    "app/lib/ 配下に domain/entities/track.dart, data/services/audio_service.dart, presentation/state/providers.dart, presentation/pages/dashboard_page.dart, presentation/pages/player_page.dart, presentation/widgets/mini_player.dart, app.dart の 7 ファイルが存在し、それぞれに責務に対応するクラス / 関数のみが定義されている。",
+    "app/lib/domain/ 配下のファイルは flutter/material.dart, package:flutter_riverpod, package:just_audio, package:go_router を import しない (`grep -RE \"^import 'package:(flutter|flutter_riverpod|just_audio|go_router)\" app/lib/domain/` が 0 件)。",
+    "app/lib/data/ 配下のファイルは flutter/material.dart, package:go_router を import しない (Domain と just_audio / flutter_riverpod の Ref は許容)。`grep -RE \"^import 'package:(flutter/material|go_router)\" app/lib/data/` が 0 件。",
+    "既存の app/test/widget_test.dart の 3 つのテスト (`App smoke test - loads without crashing` / `Discovery switch toggles state` / `Navigation to player page works`) のアサーションが一切変更されていない (`git diff f7f582d -- app/test/widget_test.dart` 上、import 文以外に変更が無い)。",
+    "新規追加された Domain ユニットテスト (app/test/domain/track_test.dart) が flutter_test だけで動作し、`flutter test app/test/domain/track_test.dart` で green。少なくとも 3 ケース以上を含み、内訳として (a) constructor で値が正しく保持される、(b) **equality (==) が同一フィールドの 2 インスタンス間で true を返す**、(c) **異なるフィールドの 2 インスタンス間で == が false を返す**、の 3 観点を最低限カバーする (b)(c) は scope[10] で追加する Track equality override に対応するテスト)。",
+    "`flutter test` 実行で全テスト (既存 3 + 新規 3 以上 = 6 以上) が green になる。具体的には既存 widget_test.dart の 3 ケースが新 Presentation 層 (scope[9] の文言調整適用後) で green、新規 track_test.dart の 3 ケース以上が green、合計が 'All tests passed' となる。",
+    "`flutter analyze` が 0 error / 0 warning で通る (既存の analysis_options.yaml の prefer_const_constructors 警告ルールも維持)。",
+    ".github/workflows/flutter-ci.yml が存在し、ファイル内に subosito/flutter-action@v2、`flutter pub get`、`dart format --set-exit-if-changed`、`flutter analyze`、`flutter test` の 5 文字列がすべて含まれる (静的検査)。",
+    "app/README.md (または ルート README) に './init.sh' の文字列、'flutter run -d web-server --web-hostname 0.0.0.0' の文字列、'bin/show-test-url.sh' の文字列の 3 つすべてが含まれる (静的検査)。",
+    "app/lib/domain/entities/track.dart で定義される Track クラスが `==` / `hashCode` / `toString` を override し、`==` はフィールドベース等価判定を行う (= 同じフィールド値の 2 インスタンスが等しいと判定される)。`grep -E '@override' app/lib/domain/entities/track.dart | wc -l` が 3 以上 (== / hashCode / toString の 3 つ以上の override)。"
+  ],
+  "test_plan": [
+    "TP-01 (init.sh 冪等性): リポジトリルートで `./init.sh && ./init.sh && echo OK` を実行し、最終出力に OK が含まれ、両回とも exit 0 で終わることを確認する (Flutter 不在環境想定)。",
+    "TP-02 (init.sh SDK 不在ガイド): `PATH=/usr/bin:/bin ./init.sh 2>&1 | grep -F 'Flutter SDK not found'` が 1 件以上ヒットし、exit code が 0 であることを確認する。",
+    "TP-03 (init.sh strict mode): `PATH=/usr/bin:/bin ./init.sh --strict; echo $?` の最終 echo 出力が `1` であることを確認する。",
+    "TP-04 (起動案内表示): `./init.sh 2>&1 | grep -F 'flutter run -d web-server --web-hostname 0.0.0.0 --web-port 8080'` が 1 件以上、`./init.sh 2>&1 | grep -F 'bin/show-test-url.sh 8080'` が 1 件以上ヒットすることを確認する。",
+    "TP-05 (層分離ファイル存在): `test -f app/lib/domain/entities/track.dart && test -f app/lib/data/services/audio_service.dart && test -f app/lib/presentation/state/providers.dart && test -f app/lib/presentation/pages/dashboard_page.dart && test -f app/lib/presentation/pages/player_page.dart && test -f app/lib/presentation/widgets/mini_player.dart && test -f app/lib/app.dart` がすべて成功することを確認する。",
+    "TP-06 (main.dart 縮小): `wc -l < app/lib/main.dart` の値が 30 以下であることを確認する。",
+    "TP-07 (Domain 層 import 制約): `grep -REn \"^import 'package:(flutter/|flutter_riverpod|just_audio|go_router)\" app/lib/domain/ | wc -l` の出力が `0` であることを確認する。",
+    "TP-08 (Data 層 import 制約): `grep -REn \"^import 'package:(flutter/material|go_router)\" app/lib/data/ | wc -l` の出力が `0` であることを確認する。",
+    "TP-09 (既存テスト不変): baseline SHA を `f7f582d` (sprint ブランチ分岐元 = `harness: integrate claude-harness-dev scaffold`) に固定する。`git diff f7f582d -- app/test/widget_test.dart` の出力で、test ロジック行 (test 名 / expect / await / find / pumpWidget) に **変更が無く、import 文 (`import 'package:...';`) のみが変更されている**ことを目視+grep で確認する。具体的には `git diff f7f582d -- app/test/widget_test.dart | grep -E '^[+-][^+-]' | grep -vE \"^[+-]import \" | wc -l` の出力が `0` であること (= 差分の追加/削除行が import 行以外に存在しない)。",
+    "TP-10 (新規 Domain テスト存在 + green): `test -f app/test/domain/track_test.dart` が成功し、ファイル内に `testWidgets` ではなく `test(` を最低 3 件含むことを `grep -c \"^\\s*test(\" app/test/domain/track_test.dart` で確認する (期待: >=3)。さらに、ファイル内に `==` を使った equality 比較の expect が含まれる (`grep -F 'expect(' app/test/domain/track_test.dart` の中に同一フィールド Track 2 個の同値判定と異フィールド Track 2 個の非同値判定が読み取れること、または `grep -cE 'isTrue|isFalse|equals|==' app/test/domain/track_test.dart` が 2 以上)。Flutter SDK がある CI 環境では `cd app && flutter test test/domain/track_test.dart` が green。",
+    "TP-11 (全テスト green): Flutter SDK がある環境で `cd app && flutter test` を実行し、結果に 'All tests passed' を含む / failure: 0 で終了 (exit 0) することを確認する。SDK 不在の container では本項目は CI ログ (.github/workflows/flutter-ci.yml の最新 run の summary) での確認に置き換える。テスト合計件数は 6 件以上 (既存 widget_test.dart 3 + 新規 track_test.dart 3 以上)。",
+    "TP-12 (analyze 通過): Flutter SDK がある環境で `cd app && flutter analyze` を実行し exit 0 で 'No issues found' を含むことを確認する。SDK 不在の container では CI ログでの確認に置き換える。",
+    "TP-13 (CI ワークフロー静的検査): `.github/workflows/flutter-ci.yml` を読み、`subosito/flutter-action@v2` `flutter pub get` `dart format --set-exit-if-changed` `flutter analyze` `flutter test` の **5 文字列** がそれぞれ 1 件以上含まれることを `grep -F` で確認する (各文字列に対し `grep -F -c '<str>' .github/workflows/flutter-ci.yml` が 1 以上)。",
+    "TP-14 (README 静的検査): `app/README.md` または ルート `README.md` のいずれかに './init.sh' / 'flutter run -d web-server --web-hostname 0.0.0.0' / 'bin/show-test-url.sh' の 3 文字列がそれぞれ含まれることを `grep -F` で確認する。",
+    "TP-15 (機能回帰なし): `cd app && flutter test` で実行される widget_test.dart の 3 ケース ('App smoke test', 'Discovery switch toggles state', 'Navigation to player page works') が **新パスでも** green になることを確認する (= scope[9] の文言調整 + Presentation 層リファクタ後も DashboardPage / PlayerPage / Switch / Player 文言の振る舞いが回帰していない)。具体的には DashboardPage が 'Proximity Music' を Text として表示、Discovery off で 'Discovery Paused' 表示・on で 'Discovery Active' 表示、Player ページ遷移後に 'Player' と '再生コントロール' が両方 Text として表示されること。",
+    "TP-16 (Track equality override 静的検査): `grep -cE '@override' app/lib/domain/entities/track.dart` が 3 以上 (== / hashCode / toString の 3 つ以上 override されている) ことを確認し、`grep -E 'bool operator ==' app/lib/domain/entities/track.dart | wc -l` が 1 以上、`grep -E 'int get hashCode' app/lib/domain/entities/track.dart | wc -l` が 1 以上、`grep -E 'String toString' app/lib/domain/entities/track.dart | wc -l` が 1 以上であることを確認する。"
+  ],
+  "revision_history": [
+    {
+      "attempt": 1,
+      "status": "drafted",
+      "at": "2026-04-29T10:30:00Z",
+      "by": "generator"
+    },
+    {
+      "attempt": 2,
+      "status": "drafted",
+      "at": "2026-04-29T13:15:00Z",
+      "by": "generator"
+    }
+  ]
+}

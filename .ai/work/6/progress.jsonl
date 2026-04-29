@@ -1,0 +1,1 @@
+{"ts": "2026-04-29T10:25:56Z", "actor": "controller", "event": "issue_initialized", "issue_id": "6", "data": {"title": "受信即時再生 + 自動再生キュー", "branch": "sprint/06-playback-queue"}}

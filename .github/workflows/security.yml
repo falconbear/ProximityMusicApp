@@ -1,0 +1,50 @@
+# Security baseline: secret scan + dependency audit.
+#
+# Two jobs run independently. Secret leaks block the PR; dependency audit
+# is non-blocking by default (vulnerabilities surface as warnings; promote
+# to blocking by removing `|| true` once your dependency baseline is clean).
+
+name: security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '0 6 * * 1'  # Weekly Monday 06:00 UTC
+
+permissions:
+  contents: read
+
+jobs:
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  dep-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Node audit
+        if: ${{ hashFiles('package.json') != '' }}
+        run: |
+          npm audit --audit-level=high || true
+
+      - name: Python audit
+        if: ${{ hashFiles('pyproject.toml') != '' || hashFiles('requirements.txt') != '' }}
+        run: |
+          pip install pip-audit
+          pip-audit --strict || true
+
+      - name: Rust audit
+        if: ${{ hashFiles('Cargo.toml') != '' }}
+        run: |
+          cargo install cargo-audit --locked || true
+          cargo audit || true

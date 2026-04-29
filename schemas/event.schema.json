@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/falconbear/claude-harness-dev/schemas/event.schema.json",
+  "title": "Progress Event",
+  "description": "Single line in .ai/work/<issue-id>/progress.jsonl. Append-only audit log of all state transitions and significant actions.",
+  "type": "object",
+  "required": ["ts", "actor", "event", "issue_id"],
+  "additionalProperties": false,
+  "properties": {
+    "ts": { "type": "string", "format": "date-time" },
+    "actor": {
+      "type": "string",
+      "enum": ["planner", "generator", "evaluator", "observer", "parent", "human", "controller"]
+    },
+    "event": {
+      "type": "string",
+      "enum": [
+        "issue_initialized",
+        "contract_drafted",
+        "contract_submitted",
+        "contract_approved",
+        "contract_rejected",
+        "tdd_red_recorded",
+        "tdd_green_recorded",
+        "tdd_refactor_recorded",
+        "implementation_submitted",
+        "implementation_passed",
+        "implementation_needs_fix",
+        "state_transition",
+        "blocked",
+        "unblocked",
+        "pr_opened",
+        "pr_marked_ready",
+        "pr_merged",
+        "note"
+      ]
+    },
+    "issue_id": { "type": "string", "pattern": "^[0-9]+$" },
+    "from_state": {
+      "type": ["string", "null"]
+    },
+    "to_state": {
+      "type": ["string", "null"]
+    },
+    "data": {
+      "type": "object",
+      "description": "Event-specific payload. Free-form but keys should be stable per event type."
+    }
+  }
+}

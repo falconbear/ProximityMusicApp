@@ -1,0 +1,9 @@
+
+# claude-harness-dev
+.harness/cache/
+.harness/tmp/
+.claude-rc.log
+.pr-body.md
+.pr-comment.md
+.issue-body.md
+.pr-review-threads.json

@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/falconbear/claude-harness-dev/schemas/state.schema.json",
+  "title": "Issue State",
+  "description": "Canonical state for a single Issue (one Issue = one sprint). Single writer: bin/controller.py.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "issue_id",
+    "title",
+    "branch",
+    "current_state",
+    "contract_attempts",
+    "attempts",
+    "tdd",
+    "timestamps"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "issue_id": {
+      "type": "string",
+      "description": "GitHub Issue number as string (e.g. '42'). Stable identity across the Issue lifecycle.",
+      "pattern": "^[0-9]+$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "branch": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Working git branch. Convention: sprint/<issue-id>-<slug>."
+    },
+    "pr_number": {
+      "type": ["integer", "null"],
+      "description": "GitHub PR number. Null until draft PR is opened."
+    },
+    "project_item_id": {
+      "type": ["string", "null"],
+      "description": "GitHub Projects v2 item node id. Null if not linked."
+    },
+    "current_state": {
+      "type": "string",
+      "enum": [
+        "PLANNED",
+        "CONTRACT_REVIEW",
+        "CONTRACT_APPROVED",
+        "IN_PROGRESS_RED",
+        "IN_PROGRESS_GREEN",
+        "READY_FOR_REVIEW",
+        "NEEDS_FIX",
+        "PASSED",
+        "BLOCKED"
+      ]
+    },
+    "previous_state": {
+      "type": ["string", "null"],
+      "enum": [
+        "PLANNED",
+        "CONTRACT_REVIEW",
+        "CONTRACT_APPROVED",
+        "IN_PROGRESS_RED",
+        "IN_PROGRESS_GREEN",
+        "READY_FOR_REVIEW",
+        "NEEDS_FIX",
+        "PASSED",
+        "BLOCKED",
+        null
+      ]
+    },
+    "last_transition_at": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "last_transition_by": {
+      "type": ["string", "null"],
+      "enum": ["planner", "generator", "evaluator", "observer", "parent", "human", null]
+    },
+    "contract_attempts": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3
+    },
+    "attempts": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 5
+    },
+    "tdd": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["red_commit_sha", "green_commit_sha", "refactor_commit_sha"],
+      "properties": {
+        "red_commit_sha": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{7,40}$"
+        },
+        "green_commit_sha": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{7,40}$"
+        },
+        "refactor_commit_sha": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{7,40}$"
+        }
+      }
+    },
+    "blocked_reason": {
+      "type": ["string", "null"],
+      "enum": [
+        "contract_attempts_exhausted",
+        "impl_attempts_exhausted",
+        "spec_missing",
+        "spec_ambiguous",
+        "human_judgment_required",
+        "external_dependency",
+        "tdd_order_violation",
+        "test_integrity_violation",
+        null
+      ]
+    },
+    "blocked_note": {
+      "type": ["string", "null"],
+      "description": "Free-form human-readable note when blocked."
+    },
+    "timestamps": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["created_at", "updated_at"],
+      "properties": {
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

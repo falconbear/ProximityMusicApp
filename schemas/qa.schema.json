@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/falconbear/claude-harness-dev/schemas/qa.schema.json",
+  "title": "QA Result",
+  "description": "Evaluator's machine-readable verdict. Prose reasoning lives in docs/feedback/*.md; this file is the structured judgement.",
+  "type": "object",
+  "required": ["schema_version", "issue_id", "mode", "verdict", "last_evaluated_at"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0" },
+    "issue_id": { "type": "string", "pattern": "^[0-9]+$" },
+    "mode": {
+      "type": "string",
+      "enum": ["contract", "implementation"]
+    },
+    "verdict": {
+      "type": ["string", "null"],
+      "enum": [
+        "contract_approved",
+        "contract_rejected",
+        "passed",
+        "needs_fix",
+        "blocked",
+        null
+      ]
+    },
+    "last_evaluated_at": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "evaluator_run_id": {
+      "type": ["string", "null"]
+    },
+    "contract_review": {
+      "type": ["object", "null"],
+      "required": ["seven_point", "feedback_ref"],
+      "additionalProperties": false,
+      "properties": {
+        "seven_point": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "scope_clarity",
+            "out_of_scope_explicit",
+            "success_measurable",
+            "test_plan_executable",
+            "coverage",
+            "spec_aligned",
+            "prior_sprint_aligned"
+          ],
+          "properties": {
+            "scope_clarity": { "enum": ["pass", "fail"] },
+            "out_of_scope_explicit": { "enum": ["pass", "fail"] },
+            "success_measurable": { "enum": ["pass", "fail"] },
+            "test_plan_executable": { "enum": ["pass", "fail"] },
+            "coverage": { "enum": ["pass", "fail"] },
+            "spec_aligned": { "enum": ["pass", "fail"] },
+            "prior_sprint_aligned": { "enum": ["pass", "fail"] }
+          }
+        },
+        "feedback_ref": {
+          "type": "string",
+          "description": "Relative path to docs/feedback/issue-<id>-contract.md"
+        }
+      }
+    },
+    "implementation_review": {
+      "type": ["object", "null"],
+      "required": ["scores", "thresholds_met", "tdd_verified", "bugs", "feedback_ref"],
+      "additionalProperties": false,
+      "properties": {
+        "scores": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "contract_compliance",
+            "operational_stability",
+            "quality_ux",
+            "edge_cases",
+            "no_regressions"
+          ],
+          "properties": {
+            "contract_compliance": { "type": "integer", "minimum": 1, "maximum": 5 },
+            "operational_stability": { "type": "integer", "minimum": 1, "maximum": 5 },
+            "quality_ux": { "type": "integer", "minimum": 1, "maximum": 5 },
+            "edge_cases": { "type": "integer", "minimum": 1, "maximum": 5 },
+            "no_regressions": { "type": "integer", "minimum": 1, "maximum": 5 }
+          }
+        },
+        "thresholds_met": { "type": "boolean" },
+        "tdd_verified": { "type": "boolean" },
+        "bugs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "severity", "title"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string" },
+              "severity": { "enum": ["critical", "major", "minor"] },
+              "title": { "type": "string" },
+              "repro_ref": { "type": ["string", "null"] }
+            }
+          }
+        },
+        "feedback_ref": {
+          "type": "string",
+          "description": "Relative path to docs/feedback/issue-<id>.md"
+        }
+      }
+    }
+  }
+}

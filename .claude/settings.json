@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "model": "claude-opus-4-7",
+  "permissions": {
+    "allow": [
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Bash(git *)",
+      "Bash(gh *)",
+      "Bash(npm *)",
+      "Bash(npx *)",
+      "Bash(node *)",
+      "Bash(python *)",
+      "Bash(python3 *)",
+      "Bash(pytest *)",
+      "Bash(docker *)",
+      "Bash(./init.sh)",
+      "Bash(./bin/*)",
+      "Bash(ls *)",
+      "Bash(cat *)",
+      "Bash(pwd)",
+      "Bash(mkdir *)"
+    ],
+    "deny": [
+      "Bash(rm -rf /*)",
+      "Bash(git push * --force*)",
+      "Bash(git reset --hard *)",
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(~/.ssh/*)",
+      "Read(~/.aws/*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 hooks/session_start_hook.py || true"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 hooks/security_reminder_hook.py || true"
+          },
+          {
+            "type": "command",
+            "command": "python3 hooks/test_integrity_hook.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 hooks/contract_immutability_hook.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 hooks/instinct_scope_hook.py"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 hooks/git_safety_hook.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 hooks/tdd_order_hook.py || true"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "CLAUDE_HOOK=1 python3 bin/validate-state.py || true"
+          },
+          {
+            "type": "command",
+            "command": "python3 hooks/sprint_state_hook.py || true"
+          }
+        ]
+      }
+    ]
+  }
+}

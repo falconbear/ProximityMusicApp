@@ -62,12 +62,12 @@ class _ConsentPageState extends ConsumerState<ConsentPage> {
                     style: TextStyle(color: Colors.orangeAccent),
                   ),
                 ),
-              Expanded(
+              const Expanded(
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       Text(
                         'アプリ利用規約',
                         style: TextStyle(
@@ -88,8 +88,10 @@ class _ConsentPageState extends ConsumerState<ConsentPage> {
                         'する場合があります。\n'
                         '3. 規約は予告なく更新されることがあります。更新時'
                         'には再同意を求めます。',
-                        style:
-                            TextStyle(color: Colors.white70, fontSize: 13),
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 13,
+                        ),
                       ),
                       SizedBox(height: 16),
                       Text(
@@ -105,8 +107,10 @@ class _ConsentPageState extends ConsumerState<ConsentPage> {
                         '当アプリはユーザーの近接情報を一時的に処理しますが、'
                         '長期保存や第三者提供は行いません。詳細は別途公開する'
                         '正式版プライバシーポリシーをご参照ください。',
-                        style:
-                            TextStyle(color: Colors.white70, fontSize: 13),
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 13,
+                        ),
                       ),
                     ],
                   ),

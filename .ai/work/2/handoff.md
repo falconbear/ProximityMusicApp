@@ -164,4 +164,59 @@ bash bin/show-test-url.sh 8080
 
 ## 修正ログ (Phase 4 のみ追記)
 
-(本 handoff は初回 READY_FOR_REVIEW 時の作成、修正ログは未着手)
+### Attempt 2 (2026-04-30)
+
+evaluator の qa.json (verdict=needs_fix) と `docs/feedback/issue-2.md` の指摘 4 件
+(Critical 2 / Major 2) に対応した。
+
+| Bug | 場所 | 対応 |
+|---|---|---|
+| BUG-1 (Critical) | `app/lib/presentation/pages/onboarding/consent_page.dart:65` | `Expanded(...)` を `const Expanded(...)` に書き換え。子の `SingleChildScrollView` / `Column` / `Text` / `SizedBox` はすべて const-evaluable な constructor だけで構成されているので、親 1 箇所に `const` を付ければ lint warning 3 件 (line 65/66/67) すべてが解消される。`children: const [...]` の `const` プレフィックスは Expanded 親が const になったため不要となり削除。SC-28 / TP-20 の `flutter analyze` 0 warning を満たす想定。|
+| BUG-2 (Critical) | `app/lib/presentation/state/onboarding_providers.dart:68` | コメントの `permission_handler` 文字列を `OS permission API` に書き換え。`grep -F 'permission_handler' app/lib/ \| wc -l` = 0 を確認。scope[19] の strict grep 要件を満たす。|
+| BUG-3 (Major) | `app/test/presentation/settings_page_test.dart` (新設) | 独立した SettingsPage Widget テストを 1 件追加。`pumpWidget(ProviderScope(child: MaterialApp(home: SettingsPage())))` → `expect(find.text('権限を再要求'), findsOneWidget)`。既存 `onboarding_flow_test.dart` には触れず責務分離。`grep -RF "find.text('権限を再要求')" app/test/presentation/ \| wc -l` = 1 を確認。TP-26 の Widget テスト要件を満たす。|
+| BUG-4 (Major) | (自動解消見込み) | BUG-1 解消で CI flutter analyze が exit 0、後続の `flutter test` が実行される。SC-21 / SC-27 / TP-19 / TP-24 / TP-25 / TP-27 / TP-28 の動的検証が CI で実走確認できる想定。|
+
+### 検証結果 (ローカル grep)
+
+```
+$ grep -RF 'permission_handler' app/lib/ | wc -l
+0
+$ grep -n 'const Expanded' app/lib/presentation/pages/onboarding/consent_page.dart
+65:              const Expanded(
+$ grep -RF "find.text('権限を再要求')" app/test/presentation/ | wc -l
+1
+$ git diff f7f582d -- app/test/widget_test.dart | wc -c
+0
+$ git diff 638c972 -- app/test/domain/track_test.dart | wc -c
+0
+```
+
+### test-integrity / TDD 規範
+
+- 既存 `app/test/widget_test.dart` (Sprint 01 baseline f7f582d) は 0 byte 不変
+- 既存 `app/test/domain/track_test.dart` (Sprint 01 baseline 638c972) は 0 byte 不変
+- RED で書いた 5 テストファイル
+  (`onboarding_state_test.dart` / `consent_record_test.dart` /
+  `onboarding_service_test.dart` / `onboarding_flow_test.dart` /
+  `dashboard_with_banner_test.dart`) はいずれも改変していない
+- 新規追加は `app/test/presentation/settings_page_test.dart` のみ。test-integrity
+  の「新規追加は許可、既存改変は禁止」に準拠
+
+### 残懸念
+
+1. **CI 実走依存**: ローカルに Flutter SDK が無いため `flutter analyze` /
+   `flutter test` の green 確認は CI 任せ。次回 evaluator は最新 CI run を
+   確認のうえ、`flutter analyze` exit 0 + `flutter test` の `All tests passed!`
+   と件数 ≥ 32 (新規 settings_page_test.dart 1 ケース追加で 31 → 32) を確認願う。
+2. **dart format ローカル不可**: コンテナに dart コマンドが無いため、修正部分
+   (`const Expanded`、`TextStyle` の trailing-comma 化、`settings_page_test.dart`
+   新設ファイル) は手動で 80 列折返し / trailing comma を揃えた。CI の
+   `dart format --set-exit-if-changed` が warning 化されている設計
+   (Sprint 01 instinct `feedback_post_passed_ci_bugs`) なので、format diff が
+   出ても fatal にはならない想定。
+3. **BUG-1 の lint 解消の確証**: `const Expanded(...)` の中身が children
+   末端まで constant expression のみで構成されていることはコード上で目視確認
+   済み。Dart compiler が child constructor を自動 const promotion するため、
+   parent に `const` を付けるだけで line 65 / 66 / 67 の三つの warning が
+   一括解消されるはず。万が一 const promotion が効かない場合は line 66/67
+   にも個別に `const` を付ける fallback を追加する。

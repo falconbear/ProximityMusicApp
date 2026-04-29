@@ -65,7 +65,7 @@ final _onboardingPersistenceProvider =
 
 /// Stub OS permission requester. Defaults to "always grant" — tests override
 /// with a denied responder via `requestOsPermissionProvider.overrideWithValue`.
-/// The real `permission_handler` integration arrives in Issue #3.
+/// The real OS permission API integration arrives in Issue #3.
 final requestOsPermissionProvider = Provider<RequestOsPermission>(
   (ref) => (permission) async => PermissionStatus.granted,
 );

@@ -162,186 +162,202 @@ class PlayerPage extends ConsumerWidget {
                 ],
                 Expanded(
                   flex: 1,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      const Text(
-                        '再生コントロール',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                  // Wrap the controls Column in a scroll view so the
+                  // section degrades gracefully when the parent Expanded
+                  // allots a smaller height than the natural size of the
+                  // children (e.g. 800x600 widget-test viewport). Avoids
+                  // RenderFlex overflow without altering copy or theme.
+                  child: SingleChildScrollView(
+                    reverse: true,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        const Text(
+                          '再生コントロール',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      if (nowPlaying != null) ...[
-                        Padding(
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: Column(
-                            children: [
-                              SliderTheme(
-                                data: SliderTheme.of(context).copyWith(
-                                  activeTrackColor:
-                                      const Color(0xFF1DB954),
-                                  inactiveTrackColor:
-                                      Colors.white.withOpacity(0.3),
-                                  thumbColor: const Color(0xFF1DB954),
-                                  trackHeight: 4.0,
-                                  thumbShape: const RoundSliderThumbShape(
-                                    enabledThumbRadius: 6.0,
+                        const SizedBox(height: 12),
+                        if (nowPlaying != null) ...[
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8.0,
+                            ),
+                            child: Column(
+                              children: [
+                                SliderTheme(
+                                  data: SliderTheme.of(context).copyWith(
+                                    activeTrackColor:
+                                        const Color(0xFF1DB954),
+                                    inactiveTrackColor:
+                                        Colors.white.withOpacity(0.3),
+                                    thumbColor: const Color(0xFF1DB954),
+                                    trackHeight: 4.0,
+                                    thumbShape:
+                                        const RoundSliderThumbShape(
+                                      enabledThumbRadius: 6.0,
+                                    ),
+                                  ),
+                                  child: Slider(
+                                    value: duration.inMilliseconds > 0
+                                        ? (position.inMilliseconds
+                                                    .toDouble() /
+                                                duration.inMilliseconds
+                                                    .toDouble())
+                                            .clamp(0.0, 1.0)
+                                        : 0.0,
+                                    onChanged: (value) {
+                                      // TODO: Implement seek functionality
+                                    },
                                   ),
                                 ),
-                                child: Slider(
-                                  value: duration.inMilliseconds > 0
-                                      ? (position.inMilliseconds.toDouble() /
-                                              duration.inMilliseconds
-                                                  .toDouble())
-                                          .clamp(0.0, 1.0)
-                                      : 0.0,
-                                  onChanged: (value) {
-                                    // TODO: Implement seek functionality
-                                  },
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16.0,
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        _formatDuration(position),
+                                        style: TextStyle(
+                                          color: Colors.white
+                                              .withOpacity(0.7),
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                      Text(
+                                        _formatDuration(duration),
+                                        style: TextStyle(
+                                          color: Colors.white
+                                              .withOpacity(0.7),
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                          ),
+                          child: Row(
+                            mainAxisAlignment:
+                                MainAxisAlignment.spaceEvenly,
+                            children: [
+                              IconButton(
+                                onPressed: audioService.skipNext,
+                                icon: Icon(
+                                  Icons.skip_previous_rounded,
+                                  color: Colors.white.withOpacity(0.8),
+                                  size: 36,
                                 ),
                               ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 16.0),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      _formatDuration(position),
-                                      style: TextStyle(
-                                        color:
-                                            Colors.white.withOpacity(0.7),
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                    Text(
-                                      _formatDuration(duration),
-                                      style: TextStyle(
-                                        color:
-                                            Colors.white.withOpacity(0.7),
-                                        fontSize: 12,
-                                      ),
+                              Container(
+                                width: 72,
+                                height: 72,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF1DB954),
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFF1DB954)
+                                          .withOpacity(0.4),
+                                      blurRadius: 16,
+                                      offset: const Offset(0, 4),
                                     ),
                                   ],
+                                ),
+                                child: IconButton(
+                                  onPressed: nowPlaying != null
+                                      ? () {
+                                          if (isPlaying) {
+                                            audioService.pause();
+                                          } else {
+                                            audioService.resume();
+                                          }
+                                        }
+                                      : null,
+                                  icon: Icon(
+                                    isPlaying
+                                        ? Icons.pause_rounded
+                                        : Icons.play_arrow_rounded,
+                                    color: Colors.black,
+                                    size: 36,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                onPressed: audioService.skipNext,
+                                icon: Icon(
+                                  Icons.skip_next_rounded,
+                                  color: Colors.white.withOpacity(0.8),
+                                  size: 36,
                                 ),
                               ),
                             ],
                           ),
                         ),
                         const SizedBox(height: 16),
-                      ],
-                      Padding(
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        Row(
+                          mainAxisAlignment:
+                              MainAxisAlignment.spaceEvenly,
                           children: [
                             IconButton(
-                              onPressed: audioService.skipNext,
+                              onPressed: () {},
                               icon: Icon(
-                                Icons.skip_previous_rounded,
-                                color: Colors.white.withOpacity(0.8),
-                                size: 36,
-                              ),
-                            ),
-                            Container(
-                              width: 72,
-                              height: 72,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF1DB954),
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFF1DB954)
-                                        .withOpacity(0.4),
-                                    blurRadius: 16,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: IconButton(
-                                onPressed: nowPlaying != null
-                                    ? () {
-                                        if (isPlaying) {
-                                          audioService.pause();
-                                        } else {
-                                          audioService.resume();
-                                        }
-                                      }
-                                    : null,
-                                icon: Icon(
-                                  isPlaying
-                                      ? Icons.pause_rounded
-                                      : Icons.play_arrow_rounded,
-                                  color: Colors.black,
-                                  size: 36,
-                                ),
+                                Icons.devices_rounded,
+                                color: Colors.white.withOpacity(0.6),
+                                size: 24,
                               ),
                             ),
                             IconButton(
-                              onPressed: audioService.skipNext,
+                              onPressed: () {},
                               icon: Icon(
-                                Icons.skip_next_rounded,
-                                color: Colors.white.withOpacity(0.8),
-                                size: 36,
+                                Icons.share_rounded,
+                                color: Colors.white.withOpacity(0.6),
+                                size: 24,
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: nowPlaying == null
+                                  ? null
+                                  : () {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          backgroundColor:
+                                              const Color(0xFF1DB954),
+                                          content: Text(
+                                            '${nowPlaying.from} blocked',
+                                            style: const TextStyle(
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                              icon: Icon(
+                                Icons.block_rounded,
+                                color: Colors.white.withOpacity(0.6),
+                                size: 24,
                               ),
                             ),
                           ],
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          IconButton(
-                            onPressed: () {},
-                            icon: Icon(
-                              Icons.devices_rounded,
-                              color: Colors.white.withOpacity(0.6),
-                              size: 24,
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () {},
-                            icon: Icon(
-                              Icons.share_rounded,
-                              color: Colors.white.withOpacity(0.6),
-                              size: 24,
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: nowPlaying == null
-                                ? null
-                                : () {
-                                    ScaffoldMessenger.of(context)
-                                        .showSnackBar(
-                                      SnackBar(
-                                        backgroundColor:
-                                            const Color(0xFF1DB954),
-                                        content: Text(
-                                          '${nowPlaying.from} blocked',
-                                          style: const TextStyle(
-                                            color: Colors.black,
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                            icon: Icon(
-                              Icons.block_rounded,
-                              color: Colors.white.withOpacity(0.6),
-                              size: 24,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                    ],
+                        const SizedBox(height: 8),
+                      ],
+                    ),
                   ),
                 ),
               ],

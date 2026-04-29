@@ -349,33 +349,40 @@ class _EmptyQueue extends StatelessWidget {
         color: const Color(0xFF181818),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.playlist_play,
-            color: Colors.white.withOpacity(0.3),
-            size: 64,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Your queue is empty',
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.7),
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
+      // Wrap in SingleChildScrollView so that the placeholder degrades
+      // gracefully when the parent Expanded only allots a small height
+      // (e.g. the 800x600 widget-test viewport). Avoids RenderFlex overflow
+      // without changing copy, colors, or theme.
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.playlist_play,
+              color: Colors.white.withOpacity(0.3),
+              size: 64,
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Discovery new music from people around you',
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.5),
-              fontSize: 12,
+            const SizedBox(height: 16),
+            Text(
+              'Your queue is empty',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.7),
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
             ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+            const SizedBox(height: 4),
+            Text(
+              'Discovery new music from people around you',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.5),
+                fontSize: 12,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }

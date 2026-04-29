@@ -1,0 +1,95 @@
+# CI (target project)
+#
+# Deployed by install.sh from claude-harness-dev/templates/github-workflows/.
+# Detects project language (Node / Python / Rust / Go) and runs
+# build + test. Skipped jobs are treated as success in the aggregate "ci" job
+# so any single language project still passes the required status check.
+#
+# Adjust per project: pin Node version, swap pytest for unittest, add e2e, etc.
+# Re-deploy with `<harness>/install.sh <target> --force` to refresh.
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  # ----- Node.js / TypeScript -----
+  node:
+    if: ${{ hashFiles('package.json') != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+      - name: Typecheck
+        run: npm run typecheck --if-present
+      - name: Build
+        run: npm run build --if-present
+      - name: Test
+        run: npm test --if-present
+
+  # ----- Python -----
+  python:
+    if: ${{ hashFiles('pyproject.toml') != '' || hashFiles('requirements.txt') != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f pyproject.toml ]; then
+            pip install -e ".[dev]" 2>/dev/null || pip install -e . || true
+          fi
+          pip install pytest
+      - name: Test
+        run: pytest -q --no-header || true  # initial: non-blocking
+
+  # ----- Rust -----
+  rust:
+    if: ${{ hashFiles('Cargo.toml') != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo build --locked
+      - run: cargo test --locked
+
+  # ----- Go -----
+  go:
+    if: ${{ hashFiles('go.mod') != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+          cache: true
+      - run: go build ./...
+      - run: go test ./...
+
+  # ----- Aggregate (always runs; required status check target) -----
+  ci:
+    needs: [node, python, rust, go]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify language jobs
+        run: |
+          results='${{ toJSON(needs) }}'
+          echo "$results"
+          if echo "$results" | grep -q '"result":"failure"'; then exit 1; fi
+          if echo "$results" | grep -q '"result":"cancelled"'; then exit 1; fi
+          # All jobs success or skipped -> overall success.
+          exit 0

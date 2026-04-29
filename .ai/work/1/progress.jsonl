@@ -9,3 +9,4 @@
 {"ts": "2026-04-29T13:33:53Z", "actor": "evaluator", "event": "implementation_needs_fix", "issue_id": "1", "from_state": "READY_FOR_REVIEW", "to_state": "NEEDS_FIX", "data": {"qa_ref": ".ai/work/1/qa.json", "feedback_ref": "docs/feedback/issue-1.md"}}
 {"ts": "2026-04-29T13:37:29Z", "actor": "generator", "event": "implementation_submitted", "issue_id": "1", "to_state": "READY_FOR_REVIEW", "data": {"attempt": 2}}
 {"ts": "2026-04-29T13:41:04Z", "actor": "evaluator", "event": "implementation_passed", "issue_id": "1", "from_state": "READY_FOR_REVIEW", "to_state": "PASSED", "data": {"qa_ref": ".ai/work/1/qa.json", "feedback_ref": "docs/feedback/issue-1.md"}}
+{"ts": "2026-04-29T19:44:15Z", "actor": "parent", "event": "pr_opened", "issue_id": "1", "data": {"pr_number": 12, "project_item_id": null}}

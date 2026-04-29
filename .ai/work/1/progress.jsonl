@@ -1,0 +1,11 @@
+{"ts": "2026-04-29T10:25:40Z", "actor": "controller", "event": "issue_initialized", "issue_id": "1", "data": {"title": "プロジェクト基盤整備 (init.sh + CI + 層分離)", "branch": "sprint/01-bootstrap-and-layered-refactor"}}
+{"ts": "2026-04-29T10:29:16Z", "actor": "generator", "event": "contract_submitted", "issue_id": "1", "from_state": "PLANNED", "to_state": "CONTRACT_REVIEW", "data": {"attempt": 1}}
+{"ts": "2026-04-29T13:02:49Z", "actor": "evaluator", "event": "contract_rejected", "issue_id": "1", "from_state": "CONTRACT_REVIEW", "to_state": "PLANNED", "data": {"attempt": 1, "feedback_ref": "docs/feedback/issue-1-contract.md"}}
+{"ts": "2026-04-29T13:05:59Z", "actor": "generator", "event": "contract_submitted", "issue_id": "1", "from_state": "PLANNED", "to_state": "CONTRACT_REVIEW", "data": {"attempt": 2}}
+{"ts": "2026-04-29T13:10:41Z", "actor": "evaluator", "event": "contract_approved", "issue_id": "1", "from_state": "CONTRACT_REVIEW", "to_state": "CONTRACT_APPROVED", "data": {"feedback_ref": "docs/feedback/issue-1-contract.md"}}
+{"ts": "2026-04-29T13:17:33Z", "actor": "generator", "event": "tdd_red_recorded", "issue_id": "1", "data": {"commit_sha": "56ba9ca25bd1bf6155a4b738a25528d8eb729b86", "phase": "red"}}
+{"ts": "2026-04-29T13:24:04Z", "actor": "generator", "event": "tdd_green_recorded", "issue_id": "1", "data": {"commit_sha": "e0f422a1f11d02dae5173f3e7a4fc0e0a25d3b80", "phase": "green"}}
+{"ts": "2026-04-29T13:27:58Z", "actor": "generator", "event": "implementation_submitted", "issue_id": "1", "to_state": "READY_FOR_REVIEW", "data": {"attempt": 1}}
+{"ts": "2026-04-29T13:33:53Z", "actor": "evaluator", "event": "implementation_needs_fix", "issue_id": "1", "from_state": "READY_FOR_REVIEW", "to_state": "NEEDS_FIX", "data": {"qa_ref": ".ai/work/1/qa.json", "feedback_ref": "docs/feedback/issue-1.md"}}
+{"ts": "2026-04-29T13:37:29Z", "actor": "generator", "event": "implementation_submitted", "issue_id": "1", "to_state": "READY_FOR_REVIEW", "data": {"attempt": 2}}
+{"ts": "2026-04-29T13:41:04Z", "actor": "evaluator", "event": "implementation_passed", "issue_id": "1", "from_state": "READY_FOR_REVIEW", "to_state": "PASSED", "data": {"qa_ref": ".ai/work/1/qa.json", "feedback_ref": "docs/feedback/issue-1.md"}}

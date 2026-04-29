@@ -1,0 +1,1 @@
+{"ts": "2026-04-29T10:25:56Z", "actor": "controller", "event": "issue_initialized", "issue_id": "9", "data": {"title": "受信楽曲ライブラリ + ストレージ上限自動クリーンアップ", "branch": "sprint/09-library-and-storage"}}

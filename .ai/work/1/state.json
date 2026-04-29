@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "issue_id": "1",
+  "title": "プロジェクト基盤整備 (init.sh + CI + 層分離)",
+  "branch": "sprint/01-bootstrap-and-layered-refactor",
+  "pr_number": null,
+  "project_item_id": null,
+  "current_state": "PASSED",
+  "previous_state": "READY_FOR_REVIEW",
+  "last_transition_at": "2026-04-29T13:41:04Z",
+  "last_transition_by": "evaluator",
+  "contract_attempts": 2,
+  "attempts": 2,
+  "tdd": {
+    "red_commit_sha": "56ba9ca25bd1bf6155a4b738a25528d8eb729b86",
+    "green_commit_sha": "e0f422a1f11d02dae5173f3e7a4fc0e0a25d3b80",
+    "refactor_commit_sha": null
+  },
+  "blocked_reason": null,
+  "blocked_note": null,
+  "timestamps": {
+    "created_at": "2026-04-29T10:25:40Z",
+    "updated_at": "2026-04-29T13:41:04Z"
+  }
+}

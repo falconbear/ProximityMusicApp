@@ -1,0 +1,2 @@
+- [BLIND-SPOT layered-import-grep](blind_spot_layered_import_grep.md) — 層分離 SC が grep で外部パッケージのみ禁止する場合、内部 presentation→data 逆向き依存は SC 静的検査をすり抜ける
+- [HEURISTIC callback-injection-remedy](heuristic_callback_injection_remedy.md) — Data→Presentation 循環依存は Domain typedef + コールバック注入で 2 ファイル変更だけで解消可、公開 interface 不変

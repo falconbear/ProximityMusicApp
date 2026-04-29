@@ -1,0 +1,1 @@
+{"ts": "2026-04-29T10:25:56Z", "actor": "controller", "event": "issue_initialized", "issue_id": "7", "data": {"title": "バックグラウンド受信・再生 + メディア通知統合", "branch": "sprint/07-background-mode"}}

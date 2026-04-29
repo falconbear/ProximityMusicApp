@@ -1,77 +1,98 @@
 // Data layer: AudioService
 //
-// Wraps just_audio's AudioPlayer and translates playback events into Riverpod
-// state mutations. Imports flutter_riverpod's Ref for state plumbing and
-// just_audio for the underlying player, but must NOT import flutter/material
-// or go_router (data layer constraint).
+// Wraps just_audio's AudioPlayer and notifies state changes via injected
+// callbacks. The Data layer must NOT depend on the Presentation layer (no
+// import of `presentation/state/providers.dart`); state plumbing into Riverpod
+// providers is wired up in `audioServiceProvider` (Presentation) by passing
+// closures that read/write the relevant providers. AudioService itself only
+// knows about Domain types (Track) and just_audio's AudioPlayer.
 
-import 'package:flutter/foundation.dart' show debugPrint;
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:developer' as developer;
+
+import 'package:just_audio/just_audio.dart';
 
 import 'package:proximity_music_app/domain/entities/track.dart';
-import 'package:proximity_music_app/presentation/state/providers.dart';
+
+/// Callback type aliases for state plumbing. These are deliberately defined
+/// on Domain types only (no Riverpod / Flutter imports).
+typedef PlayingChanged = void Function(bool playing);
+typedef PositionChanged = void Function(Duration position);
+typedef DurationChanged = void Function(Duration duration);
+typedef NowPlayingChanged = void Function(Track? track);
+typedef QueueRead = List<Track> Function();
+typedef QueueWrite = void Function(List<Track> queue);
 
 class AudioService {
-  AudioService(this.ref);
+  AudioService(
+    this.player, {
+    required this.onPlayingChanged,
+    required this.onPositionChanged,
+    required this.onDurationChanged,
+    required this.onNowPlayingChanged,
+    required this.readQueue,
+    required this.writeQueue,
+  });
 
-  final Ref ref;
+  final AudioPlayer player;
+  final PlayingChanged onPlayingChanged;
+  final PositionChanged onPositionChanged;
+  final DurationChanged onDurationChanged;
+  final NowPlayingChanged onNowPlayingChanged;
+  final QueueRead readQueue;
+  final QueueWrite writeQueue;
 
   Future<void> play(Track track) async {
-    final player = ref.read(audioPlayerProvider);
     try {
       await player.setAsset(track.filePath);
       await player.play();
-      ref.read(isPlayingProvider.notifier).state = true;
-      ref.read(nowPlayingProvider.notifier).state = track;
+      onPlayingChanged(true);
+      onNowPlayingChanged(track);
 
       player.positionStream.listen((position) {
-        ref.read(positionProvider.notifier).state = position;
+        onPositionChanged(position);
       });
 
       player.durationStream.listen((duration) {
         if (duration != null) {
-          ref.read(durationProvider.notifier).state = duration;
+          onDurationChanged(duration);
         }
       });
 
       player.playingStream.listen((playing) {
-        ref.read(isPlayingProvider.notifier).state = playing;
+        onPlayingChanged(playing);
       });
     } catch (e) {
-      debugPrint('Error playing audio: $e');
+      developer.log('Error playing audio: $e', name: 'AudioService');
     }
   }
 
   Future<void> pause() async {
-    final player = ref.read(audioPlayerProvider);
     await player.pause();
-    ref.read(isPlayingProvider.notifier).state = false;
+    onPlayingChanged(false);
   }
 
   Future<void> resume() async {
-    final player = ref.read(audioPlayerProvider);
     await player.play();
-    ref.read(isPlayingProvider.notifier).state = true;
+    onPlayingChanged(true);
   }
 
   Future<void> stop() async {
-    final player = ref.read(audioPlayerProvider);
     await player.stop();
-    ref.read(isPlayingProvider.notifier).state = false;
-    ref.read(positionProvider.notifier).state = Duration.zero;
+    onPlayingChanged(false);
+    onPositionChanged(Duration.zero);
   }
 
   Future<void> skipNext() async {
-    final queue = ref.read(queueProvider);
+    final queue = readQueue();
     if (queue.isNotEmpty) {
       final updated = [...queue]..removeAt(0);
-      ref.read(queueProvider.notifier).state = updated;
+      writeQueue(updated);
 
       if (updated.isNotEmpty) {
         await play(updated.first);
       } else {
         await stop();
-        ref.read(nowPlayingProvider.notifier).state = null;
+        onNowPlayingChanged(null);
       }
     }
   }

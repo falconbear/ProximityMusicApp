@@ -35,6 +35,23 @@ final audioPlayerProvider = Provider<AudioPlayer>((ref) {
 });
 
 /// Application service that orchestrates playback and queue mutations.
+///
+/// AudioService itself lives in the Data layer and knows nothing about
+/// Riverpod providers. We wire its state-change callbacks here so the Data
+/// layer stays free of Presentation imports (single-direction layering:
+/// Presentation -> Data -> Domain).
 final audioServiceProvider = Provider<AudioService>((ref) {
-  return AudioService(ref);
+  return AudioService(
+    ref.read(audioPlayerProvider),
+    onPlayingChanged: (playing) =>
+        ref.read(isPlayingProvider.notifier).state = playing,
+    onPositionChanged: (position) =>
+        ref.read(positionProvider.notifier).state = position,
+    onDurationChanged: (duration) =>
+        ref.read(durationProvider.notifier).state = duration,
+    onNowPlayingChanged: (track) =>
+        ref.read(nowPlayingProvider.notifier).state = track,
+    readQueue: () => ref.read(queueProvider),
+    writeQueue: (queue) => ref.read(queueProvider.notifier).state = queue,
+  );
 });

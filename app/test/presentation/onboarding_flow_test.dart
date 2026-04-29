@@ -136,7 +136,11 @@ void main() {
       await tester.pumpAndSettle();
 
       // Welcome copy must be the first onboarding screen the user sees.
-      expect(find.text('Welcome'), findsOneWidget);
+      // Both the AppBar title and the body heading legitimately render
+      // 'Welcome', so we accept >=1 match here and rely on the 'Next'
+      // button (rendered only by the body's OnboardingNavigation) to
+      // confirm we landed on WelcomePage rather than any other route.
+      expect(find.text('Welcome'), findsAtLeastNWidgets(1));
       expect(find.text('Next'), findsOneWidget);
     },
   );

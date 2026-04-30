@@ -24,6 +24,14 @@ class DashboardPage extends ConsumerWidget {
         title: const Text('Proximity Music'),
         actions: [
           IconButton(
+            tooltip: 'Discover',
+            onPressed: () => context.go('/discover'),
+            icon: const Icon(
+              Icons.radar,
+              color: Color(0xFF1DB954),
+            ),
+          ),
+          IconButton(
             tooltip: 'Player',
             onPressed: () => context.go('/player'),
             icon: const Icon(

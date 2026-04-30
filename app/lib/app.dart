@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:proximity_music_app/presentation/pages/dashboard_page.dart';
+import 'package:proximity_music_app/presentation/pages/discover_page.dart';
 import 'package:proximity_music_app/presentation/pages/player_page.dart';
 
 class ProximityMusicApp extends StatelessWidget {
@@ -20,6 +21,20 @@ class ProximityMusicApp extends StatelessWidget {
         GoRoute(
           path: '/player',
           builder: (context, state) => const PlayerPage(),
+        ),
+        GoRoute(
+          path: '/discover',
+          builder: (context, state) => const DiscoverPage(),
+        ),
+        // '/settings' route — placeholder so the route exists on this
+        // branch even before Issue #2 (onboarding + permissions) is
+        // merged. When Issue #2 lands, the real SettingsPage will
+        // replace this builder. Kept inline (no new file) to avoid
+        // colliding with Issue #2's app/lib/presentation/pages/
+        // settings_page.dart.
+        GoRoute(
+          path: '/settings',
+          builder: (context, state) => const _SettingsPlaceholder(),
         ),
       ],
     );
@@ -64,6 +79,23 @@ class ProximityMusicApp extends StatelessWidget {
         ),
       ),
       routerConfig: router,
+    );
+  }
+}
+
+class _SettingsPlaceholder extends StatelessWidget {
+  const _SettingsPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Settings')),
+      body: const Center(
+        child: Text(
+          'Settings will arrive with Issue #2.',
+          style: TextStyle(color: Colors.white70),
+        ),
+      ),
     );
   }
 }

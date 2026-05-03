@@ -1,9 +1,14 @@
 # CI (target project)
 #
 # Deployed by install.sh from claude-harness-dev/templates/github-workflows/.
-# Detects project language (Node / Python / Rust / Go) and runs
-# build + test. Skipped jobs are treated as success in the aggregate "ci" job
-# so any single language project still passes the required status check.
+# Detects project language (Node / Python / Rust / Go) via a `detect` job
+# (job-level `if:` cannot use hashFiles() — it's only available in step-level
+# expressions) and runs build + test for whichever languages are present.
+#
+# Aggregate `ci` job is the required status check:
+#   - if no language is detected: pass (bootstrap / docs-only PRs)
+#   - if any language is detected: at least one language job must succeed
+#   - any failed/cancelled language job: fail
 #
 # Adjust per project: pin Node version, swap pytest for unittest, add e2e, etc.
 # Re-deploy with `<harness>/install.sh <target> --force` to refresh.
@@ -16,9 +21,40 @@ on:
   pull_request:
 
 jobs:
+  # ----- Language detection -----
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      has_node:    ${{ steps.d.outputs.has_node }}
+      has_python:  ${{ steps.d.outputs.has_python }}
+      has_rust:    ${{ steps.d.outputs.has_rust }}
+      has_go:      ${{ steps.d.outputs.has_go }}
+      any:         ${{ steps.d.outputs.any }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: d
+        run: |
+          set -e
+          has_node=false;   [ -f package.json ]   && has_node=true
+          has_python=false; { [ -f pyproject.toml ] || [ -f requirements.txt ]; } && has_python=true
+          has_rust=false;   [ -f Cargo.toml ]    && has_rust=true
+          has_go=false;     [ -f go.mod ]        && has_go=true
+          any=false
+          for v in "$has_node" "$has_python" "$has_rust" "$has_go"; do
+            [ "$v" = "true" ] && any=true
+          done
+          {
+            echo "has_node=$has_node"
+            echo "has_python=$has_python"
+            echo "has_rust=$has_rust"
+            echo "has_go=$has_go"
+            echo "any=$any"
+          } >> "$GITHUB_OUTPUT"
+
   # ----- Node.js / TypeScript -----
   node:
-    if: ${{ hashFiles('package.json') != '' }}
+    needs: detect
+    if: ${{ needs.detect.outputs.has_node == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,7 +74,8 @@ jobs:
 
   # ----- Python -----
   python:
-    if: ${{ hashFiles('pyproject.toml') != '' || hashFiles('requirements.txt') != '' }}
+    needs: detect
+    if: ${{ needs.detect.outputs.has_python == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -58,7 +95,8 @@ jobs:
 
   # ----- Rust -----
   rust:
-    if: ${{ hashFiles('Cargo.toml') != '' }}
+    needs: detect
+    if: ${{ needs.detect.outputs.has_rust == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -68,7 +106,8 @@ jobs:
 
   # ----- Go -----
   go:
-    if: ${{ hashFiles('go.mod') != '' }}
+    needs: detect
+    if: ${{ needs.detect.outputs.has_go == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -81,15 +120,26 @@ jobs:
 
   # ----- Aggregate (always runs; required status check target) -----
   ci:
-    needs: [node, python, rust, go]
+    needs: [detect, node, python, rust, go]
     if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
       - name: Verify language jobs
         run: |
+          set -e
+          any='${{ needs.detect.outputs.any }}'
           results='${{ toJSON(needs) }}'
           echo "$results"
+          # Hard fail on any explicit failure or cancellation.
           if echo "$results" | grep -q '"result":"failure"'; then exit 1; fi
           if echo "$results" | grep -q '"result":"cancelled"'; then exit 1; fi
-          # All jobs success or skipped -> overall success.
+          # If a language was detected, require at least one success
+          # (otherwise "all skipped" would silently mark the PR green).
+          if [ "$any" = "true" ]; then
+            if ! echo "$results" | grep -q '"result":"success"'; then
+              echo "ERROR: language detected but no language job succeeded" >&2
+              exit 1
+            fi
+          fi
+          # No language detected (docs-only / bootstrap PR) → success.
           exit 0

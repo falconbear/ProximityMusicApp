@@ -75,6 +75,27 @@ app/lib/
 
 - ホーム画面で「Discovery」スイッチを ON にし、FAB「Simulate Discovery」でキューに曲が追加されます。
 - AppBar 右の `queue_music` アイコンで Player 画面に遷移できます。
+- AppBar の `fingerprint` アイコンで Anonymous Session ('/session') 画面に遷移できます。
+
+## Anonymous Session (Issue #4)
+
+Sprint 04 で導入した匿名セッション管理画面 ('/session') では、現在の匿名 ID
+を `XXXX-XXXX` 形式のフィンガープリントで表示し、'今すぐ更新' ボタンで即時
+ID rotation を実行できます。Domain 層 (`IdRotationPolicy`) はアプリ起動毎と
+15 分間隔のいずれか早い方でローテートし、ローテート後は旧 ID で開いた
+セッションを自動切断します。
+
+**Sprint 04 spike**: Native session transport (`MethodChannel
+proximity_music_app/session` + `EventChannel
+proximity_music_app/session/disconnects`) は Platform Channel の wire-up
+のみで、iOS/Android のネイティブ側は意図的に `transport_unavailable` を返す
+スタブです。`StubKeyExchange` も sha256 ベースの MVP placeholder で、実
+ECDH (X25519) 鍵交換は Issue #5 以降で差し替えます。
+
+**ブランチ並列の注記**: 本 sprint は main から分岐しており Issue #2
+(SettingsPage) / Issue #3 (DiscoverPage / Peer entity) はマージ前です。
+Discover ピアタップ→セッション開始の wiring と、Settings からの '匿名 ID
+即時更新' UI 統合は両 Issue マージ後の follow-up commit で実施します。
 
 ## 次の実装ステップ
 

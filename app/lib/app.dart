@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:proximity_music_app/presentation/pages/dashboard_page.dart';
 import 'package:proximity_music_app/presentation/pages/player_page.dart';
+import 'package:proximity_music_app/presentation/pages/session_page.dart';
 
 class ProximityMusicApp extends StatelessWidget {
   const ProximityMusicApp({super.key});
@@ -20,6 +21,10 @@ class ProximityMusicApp extends StatelessWidget {
         GoRoute(
           path: '/player',
           builder: (context, state) => const PlayerPage(),
+        ),
+        GoRoute(
+          path: '/session',
+          builder: (context, state) => const SessionPage(),
         ),
       ],
     );

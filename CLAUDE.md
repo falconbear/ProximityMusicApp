@@ -161,6 +161,25 @@ Remote Control で PC セッションをスマホから操作。通知は GitHub
 
 Instinct は **project-scoped** (`.harness/instincts/`)。cross-project 自動昇格なし。手動で yaml コピー。理由: チーム混成の弊害回避。
 
+## トークン削減 (RTK)
+
+container 内では `rtk` (token-optimized CLI proxy) が `/usr/local/bin/rtk` に bake されている。`PreToolUse:Bash` hook (`/workspace/.claude/settings.json`) が自動的に `git`, `gh`, `ls`, `cat`, `grep`, `pytest`, `docker` 等を `rtk <cmd>` に rewrite する。**親 Claude も subagent (planner / generator / evaluator / observer) も両方とも適用対象**。
+
+Hook の自動 rewrite に加え、能動的に使えると効果が高い rtk コマンド:
+
+| 用途 | 通常 | rtk 等価 |
+|---|---|---|
+| ファイル読み (大きい) | `cat path` | `rtk read path` (heuristic で要点抽出) |
+| 構造把握 | `tree` | `rtk tree` |
+| エラー検索 | `cmd 2>&1 \| grep -i error` | `rtk err -- cmd` |
+| テスト失敗だけ | `pytest -v` | `rtk test -- pytest` |
+| 2 行サマリ | (無し) | `rtk smart -- cmd` |
+| 削減量確認 | (無し) | `rtk gain` |
+
+`rtk grep`, `rtk find`, `rtk diff`, `rtk log` も registry にある。subagent は output サイズが大きい操作 (10 行超のファイル / git log / pytest 等) では rtk 形を**能動的に選ぶ**こと。
+
+仕様詳細・最新の registry は `~/.claude/RTK.md` (image bake、container 内のみ)。
+
 ## 関連ファイル
 
 - `PIPELINE.md` — Source of Truth

@@ -1,7 +1,8 @@
 // Presentation widget: MiniPlayer
 //
 // Bottom navigation bar showing the currently playing track with quick
-// play/pause and skip controls. Tapping the body navigates to /player.
+// play/pause, favorite toggle (Issue #6), and skip controls. Tapping the
+// body navigates to /player.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,6 +22,13 @@ class MiniPlayer extends ConsumerWidget {
     final audioService = ref.read(audioServiceProvider);
 
     if (nowPlaying == null) return const SizedBox.shrink();
+
+    // Watch the favorites store + tick so the icon rebuilds when add/remove
+    // fires. The store is mutable so identity doesn't change; the tick gives
+    // Riverpod something to compare against.
+    final favorites = ref.watch(favoritesStoreProvider);
+    ref.watch(favoritesTickProvider);
+    final isFavorite = favorites.contains(nowPlaying);
 
     return GestureDetector(
       onTap: () => context.go('/player'),
@@ -100,6 +108,26 @@ class MiniPlayer extends ConsumerWidget {
                     ),
                     IconButton(
                       onPressed: () {
+                        if (isFavorite) {
+                          favorites.remove(nowPlaying);
+                        } else {
+                          favorites.add(nowPlaying);
+                        }
+                        // FavoritesStore is a plain Set; mutating it doesn't
+                        // automatically invalidate the Provider, so nudge the
+                        // tree to rebuild by bumping a sibling counter.
+                        ref.read(favoritesTickProvider.notifier).state++;
+                      },
+                      icon: Icon(
+                        isFavorite ? Icons.favorite : Icons.favorite_border,
+                        color: isFavorite
+                            ? const Color(0xFF1DB954)
+                            : Colors.white.withOpacity(0.8),
+                        size: 24,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {
                         if (isPlaying) {
                           audioService.pause();
                         } else {
@@ -113,7 +141,11 @@ class MiniPlayer extends ConsumerWidget {
                       ),
                     ),
                     IconButton(
-                      onPressed: audioService.skipNext,
+                      onPressed: () {
+                        // Route skip through the PlaybackController so queue
+                        // / favorites / fallback all stay consistent.
+                        ref.read(playbackControllerProvider).skip();
+                      },
                       icon: Icon(
                         Icons.skip_next,
                         color: Colors.white.withOpacity(0.8),

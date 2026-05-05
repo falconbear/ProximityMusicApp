@@ -47,11 +47,11 @@ flutter test
 
 CI (`.github/workflows/flutter-ci.yml`) は subosito/flutter-action を使い、push と pull_request の両方で `flutter pub get` / `dart format --set-exit-if-changed` / `flutter analyze` / `flutter test` を実行します。
 
-## ディレクトリ構成 (Issue #1 で導入した層分離)
+## ディレクトリ構成 (Issue #1 で導入した層分離 + Issue #6 で拡張)
 
 ```
 app/lib/
-├── main.dart                                    # 16 行: runApp のみ + ProximityMusicApp の re-export
+├── main.dart                                    # runApp + ProximityMusicApp の re-export
 ├── app.dart                                     # ProximityMusicApp (MaterialApp.router + GoRouter)
 ├── domain/
 │   ├── entities/
@@ -59,14 +59,22 @@ app/lib/
 │   │   ├── peer.dart                            # Peer entity (Issue #3)
 │   │   ├── bluetooth_state.dart                 # BluetoothState enum (Issue #3)
 │   │   └── discovery_status.dart                # DiscoveryStatus enum (Issue #3)
-│   └── services/
-│       ├── discovery_source.dart                # DiscoverySource interface (Issue #3)
-│       └── peer_registry.dart                   # PeerRegistry (重複なし + ttl prune)
+│   ├── services/
+│   │   ├── discovery_source.dart                # DiscoverySource interface (Issue #3)
+│   │   └── peer_registry.dart                   # PeerRegistry (重複なし + ttl prune)
+│   └── playback/                                # Issue #6: 純 Dart 再生ドメイン
+│       ├── playback_queue.dart                  # FIFO キュー
+│       ├── favorites_store.dart                 # in-memory お気に入り Set
+│       ├── audio_gateway.dart                   # 抽象: play(Track)/stop()
+│       ├── playback_track_source.dart           # 抽象: Stream<Track>
+│       └── playback_controller.dart             # キュー + favorites + ゲートウェイ
 ├── data/
 │   └── services/
-│       ├── audio_service.dart                   # just_audio をラップ
+│       ├── audio_service.dart                   # just_audio をラップ (AudioGateway 実装)
 │       ├── fake_discovery_source.dart           # テスト/dev 用 (Issue #3)
-│       └── native_discovery_source.dart        # Platform Channel 経由 (Issue #3 spike)
+│       ├── native_discovery_source.dart         # Platform Channel 経由 (Issue #3 spike)
+│       ├── fake_track_source.dart               # Issue #6: テスト / 模擬 Discovery 用
+│       └── recording_audio_gateway.dart         # Issue #6: widgetTest 用 Recording fake
 └── presentation/
     ├── state/
     │   ├── providers.dart                       # 既存の audio / queue providers
@@ -85,11 +93,20 @@ app/lib/
 
 依存方向は `presentation → data → domain` の単方向。Domain は Flutter / Riverpod / just_audio / go_router を import しません。
 
+### Issue #6 再生ドメイン (`domain/playback/`)
+
+- **PlaybackQueue**: 受信完了 Track の FIFO。`enqueue` / `skip` / `clear`。
+- **FavoritesStore**: `Set<Track>` ベースの in-memory お気に入り。`pickShuffled(Random)` でフォールバック曲を選ぶ (Issue #9 で永続化、#10 で設定 UI)。
+- **AudioGateway** (抽象): `play(Track)` / `stop()` のみ。`AudioService` が本実装、`RecordingAudioGateway` がテスト fake。
+- **PlaybackTrackSource** (抽象): `Stream<Track>`。Issue #5 の本物の `TrackReceiver` がここに繋がる予定。本 Sprint では `FakeTrackSource` のみ提供。
+- **PlaybackController**: 受信→自動再生 / 再生中→キュー追加 / スキップ→次曲 / 空キュー→お気に入りフォールバック (ON 時) or 停止。Riverpod 側 (`playbackControllerProvider`) が `nowPlayingProvider` / `queueProvider` への投影をブリッジする。
+
 ## モックの使い方
 
 - ホーム画面で「Discovery」スイッチを ON にし、FAB「Simulate Discovery」でキューに曲が追加されます。
 - AppBar 右の `queue_music` アイコンで Player 画面に遷移できます。
 - AppBar 右の `radar` アイコンで `/discover` (Discover ページ) に遷移できます。
+- AppBar の `fingerprint` アイコンで Anonymous Session ('/session') 画面に遷移できます。
 
 ## Discover ページ (Issue #3)
 
@@ -115,6 +132,21 @@ flutter run -d android                        # 実機/エミュレータで起�
 ```
 
 Android 12 以降では BLE スキャンに `BLUETOOTH_SCAN` / `BLUETOOTH_CONNECT` (12+) と `ACCESS_FINE_LOCATION` (12 未満) を `AndroidManifest.xml` で宣言済み。実 OS パーミッションのダイアログ呼び出しは Issue #4 でハンドリングします。
+
+## Anonymous Session (Issue #4)
+
+Sprint 04 で導入した匿名セッション管理画面 ('/session') では、現在の匿名 ID
+を `XXXX-XXXX` 形式のフィンガープリントで表示し、'今すぐ更新' ボタンで即時
+ID rotation を実行できます。Domain 層 (`IdRotationPolicy`) はアプリ起動毎と
+15 分間隔のいずれか早い方でローテートし、ローテート後は旧 ID で開いた
+セッションを自動切断します。
+
+**Sprint 04 spike**: Native session transport (`MethodChannel
+proximity_music_app/session` + `EventChannel
+proximity_music_app/session/disconnects`) は Platform Channel の wire-up
+のみで、iOS/Android のネイティブ側は意図的に `transport_unavailable` を返す
+スタブです。`StubKeyExchange` も sha256 ベースの MVP placeholder で、実
+ECDH (X25519) 鍵交換は Issue #5 以降で差し替えます。
 
 ## オンボーディング / 利用規約 (Issue #2)
 

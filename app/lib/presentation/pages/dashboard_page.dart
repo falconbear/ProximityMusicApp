@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:proximity_music_app/data/services/fake_track_source.dart';
 import 'package:proximity_music_app/domain/entities/permission.dart';
 import 'package:proximity_music_app/domain/entities/track.dart';
 import 'package:proximity_music_app/presentation/state/onboarding_providers.dart';
@@ -18,6 +19,13 @@ class DashboardPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Eagerly instantiate the playback controller so its subscription to the
+    // PlaybackTrackSource is active by the time any Track is emitted. Reading
+    // it here (instead of inside _simulateDiscovery) also guarantees that
+    // background-emitted tracks (Issue #5's real receiver, FakeTrackSource in
+    // widget tests) start playback as soon as the dashboard is shown.
+    ref.watch(playbackControllerProvider);
+
     final discoveryOn = ref.watch(discoveryProvider);
     final nowPlaying = ref.watch(nowPlayingProvider);
     final queue = ref.watch(queueProvider);
@@ -32,6 +40,11 @@ class DashboardPage extends ConsumerWidget {
             tooltip: 'Discover',
             onPressed: () => context.go('/discover'),
             icon: const Icon(Icons.radar, color: Color(0xFF1DB954)),
+          ),
+          IconButton(
+            tooltip: 'Anonymous Session',
+            onPressed: () => context.go('/session'),
+            icon: const Icon(Icons.fingerprint, color: Color(0xFF1DB954)),
           ),
           IconButton(
             tooltip: 'Player',
@@ -228,13 +241,15 @@ class DashboardPage extends ConsumerWidget {
       ),
     ];
 
+    // Push the next simulated track through the same PlaybackTrackSource the
+    // controller is subscribed to. This keeps the discovery path identical to
+    // what Issue #5's real TrackReceiver will use. When the configured source
+    // is not a FakeTrackSource (e.g. the real receiver is installed), the
+    // simulate button is a no-op.
     final randomTrack = testTracks[queue.length % testTracks.length];
-    final newQueue = [randomTrack, ...queue];
-    ref.read(queueProvider.notifier).state = newQueue;
-
-    if (ref.read(nowPlayingProvider) == null) {
-      final audioService = ref.read(audioServiceProvider);
-      audioService.play(randomTrack);
+    final source = ref.read(playbackTrackSourceProvider);
+    if (source is FakeTrackSource) {
+      source.emit(randomTrack);
     }
   }
 }
@@ -295,7 +310,7 @@ class _NowPlayingCard extends ConsumerWidget {
           ),
           IconButton(
             onPressed: () {
-              ref.read(audioServiceProvider).skipNext();
+              ref.read(playbackControllerProvider).skip();
             },
             icon: const Icon(
               Icons.skip_next_rounded,

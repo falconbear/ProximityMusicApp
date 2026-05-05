@@ -92,6 +92,28 @@ app/lib/
 - ホーム画面で「Discovery」スイッチを ON にし、FAB「Simulate Discovery」でキューに曲が追加されます。
 - AppBar 右の `queue_music` アイコンで Player 画面に遷移できます。
 
+## オンボーディング / 利用規約 (Issue #2)
+
+初回起動時は **Welcome → Privacy & Battery → Permissions → Consent → Dashboard**
+の 4 ステップ Onboarding を経由します。Consent 画面では利用規約 / プライバシー
+ポリシーを `SingleChildScrollView` でアプリ内全文表示し、「同意する」チェックを
+入れた後にのみ「同意して続行」が押下可能になります。
+
+利用規約バージョン (`currentTermsVersion`) を上げると、起動時に再同意フローへ
+強制遷移し、規約画面と「同意する」「アプリを終了」の 2 ボタンしか操作できま
+せん (spec 機能 13 受け入れ基準 5)。
+
+Bluetooth 権限が `denied` の場合は Dashboard 上部に
+`近接機能は無効です。設定から有効化できます` の Banner が常時表示されます。
+Banner は表示中も Discovery スイッチや Player 画面遷移など他機能を阻害しま
+せん。設定画面 (`/settings`) には「権限を再要求」ボタンの placeholder のみ
+配置しています (本実装は別 Issue)。
+
+なお `onboardingStateProvider` の **テスト用デフォルト** は `completed` で、
+`widget_test.dart` のような override 無し pumpWidget は Dashboard に直接
+着地します。実機ビルドでは `main.dart` 側で `notStarted` を override して
+注入することで Welcome から起動します。
+
 ## 次の実装ステップ
 
 - 近接通信: Platform Channel 経由で MultipeerConnectivity (iOS) / Nearby Connections (Android) のスパイク。

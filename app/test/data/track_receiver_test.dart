@@ -43,7 +43,6 @@ class _StubIntegrityVerifier implements IntegrityVerifier {
 class _StubPayloadDecryptor implements PayloadDecryptor {
   _StubPayloadDecryptor({this.shouldThrow = false});
   final bool shouldThrow;
-  final List<int>? plaintext;
   int decryptCallCount = 0;
 
   @override
@@ -56,7 +55,7 @@ class _StubPayloadDecryptor implements PayloadDecryptor {
     if (shouldThrow) {
       throw const DecryptionFailure('stub: forced failure');
     }
-    return plaintext ?? ciphertext;
+    return ciphertext;
   }
 
   @override
@@ -349,12 +348,12 @@ void main() {
               payload: const [5, 6, 7, 8],
               isLast: false,
             ),
-            TrackChunk(
+            const TrackChunk(
               sequence: 2,
               payload: const [9, 10, 11, 12],
               isLast: false,
             ),
-            TrackChunk(
+            const TrackChunk(
               sequence: 3,
               payload: const [13, 14, 15, 16],
               isLast: true,

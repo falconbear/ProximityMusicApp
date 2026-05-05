@@ -1,4 +1,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Sprint 03 (Issue #3) — proximity discovery permissions.
+         Real BLE / Nearby scanning lands in Issue #4; this manifest
+         entry only declares the permissions that the scanner will
+         eventually request. -->
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
+                     android:usesPermissionFlags="neverForLocation" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <!-- Required for BLE scanning on Android < 12; BLE driver still
+         demands FINE location even though the app does not use
+         location data (spec.md feature 3 Out of scope). -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
     <application
         android:label="proximity_music_app"
         android:name="${applicationName}"

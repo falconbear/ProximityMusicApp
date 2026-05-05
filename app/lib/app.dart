@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:proximity_music_app/domain/entities/consent_record.dart';
 import 'package:proximity_music_app/domain/entities/onboarding_status.dart';
 import 'package:proximity_music_app/presentation/pages/dashboard_page.dart';
+import 'package:proximity_music_app/presentation/pages/discover_page.dart';
 import 'package:proximity_music_app/presentation/pages/onboarding/consent_page.dart';
 import 'package:proximity_music_app/presentation/pages/onboarding/permissions_page.dart';
 import 'package:proximity_music_app/presentation/pages/onboarding/privacy_battery_page.dart';
@@ -31,8 +32,8 @@ class ProximityMusicApp extends ConsumerWidget {
         // should reach the Welcome page instead. We therefore delegate to
         // OnboardingService.needsReconsent only when consent != null.
         final consent = onboarding.consent;
-        final reconsent = consent != null &&
-            service.needsReconsent(currentTermsVersion);
+        final reconsent =
+            consent != null && service.needsReconsent(currentTermsVersion);
 
         // Stuck redirect: in reconsent mode every path resolves to
         // /onboarding/consent.
@@ -54,13 +55,14 @@ class ProximityMusicApp extends ConsumerWidget {
         return null;
       },
       routes: [
-        GoRoute(
-          path: '/',
-          builder: (context, state) => const DashboardPage(),
-        ),
+        GoRoute(path: '/', builder: (context, state) => const DashboardPage()),
         GoRoute(
           path: '/player',
           builder: (context, state) => const PlayerPage(),
+        ),
+        GoRoute(
+          path: '/discover',
+          builder: (context, state) => const DiscoverPage(),
         ),
         GoRoute(
           path: '/session',

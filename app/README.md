@@ -55,7 +55,13 @@ app/lib/
 ├── app.dart                                     # ProximityMusicApp (MaterialApp.router + GoRouter)
 ├── domain/
 │   ├── entities/
-│   │   └── track.dart                           # Track entity (純 Dart)
+│   │   ├── track.dart                           # Track entity (純 Dart)
+│   │   ├── peer.dart                            # Peer entity (Issue #3)
+│   │   ├── bluetooth_state.dart                 # BluetoothState enum (Issue #3)
+│   │   └── discovery_status.dart                # DiscoveryStatus enum (Issue #3)
+│   ├── services/
+│   │   ├── discovery_source.dart                # DiscoverySource interface (Issue #3)
+│   │   └── peer_registry.dart                   # PeerRegistry (重複なし + ttl prune)
 │   └── playback/                                # Issue #6: 純 Dart 再生ドメイン
 │       ├── playback_queue.dart                  # FIFO キュー
 │       ├── favorites_store.dart                 # in-memory お気に入り Set
@@ -65,16 +71,24 @@ app/lib/
 ├── data/
 │   └── services/
 │       ├── audio_service.dart                   # just_audio をラップ (AudioGateway 実装)
-│       ├── fake_track_source.dart               # テスト / 模擬 Discovery 用
-│       └── recording_audio_gateway.dart         # widgetTest 用 Recording fake
+│       ├── fake_discovery_source.dart           # テスト/dev 用 (Issue #3)
+│       ├── native_discovery_source.dart         # Platform Channel 経由 (Issue #3 spike)
+│       ├── fake_track_source.dart               # Issue #6: テスト / 模擬 Discovery 用
+│       └── recording_audio_gateway.dart         # Issue #6: widgetTest 用 Recording fake
 └── presentation/
     ├── state/
-    │   └── providers.dart                       # Riverpod providers
+    │   ├── providers.dart                       # 既存の audio / queue providers
+    │   ├── discovery_providers.dart             # Discover 用 Riverpod (Issue #3)
+    │   └── discovery_controller.dart            # Pure Dart コントローラ (Issue #3)
     ├── pages/
     │   ├── dashboard_page.dart                  # ホーム画面
-    │   └── player_page.dart                     # 再生画面
+    │   ├── player_page.dart                     # 再生画面
+    │   └── discover_page.dart                   # Discover ページ (Issue #3)
     └── widgets/
-        └── mini_player.dart                     # ボトムのミニプレイヤー
+        ├── mini_player.dart                     # ボトムのミニプレイヤー
+        ├── ripple_radar.dart                    # 波紋アニメ (Issue #3)
+        ├── peer_avatar.dart                     # 36 通り幾何学アイコン (Issue #3)
+        └── peer_list_tile.dart                  # ピア一覧タイル + 相対時刻 (Issue #3)
 ```
 
 依存方向は `presentation → data → domain` の単方向。Domain は Flutter / Riverpod / just_audio / go_router を import しません。
@@ -91,7 +105,33 @@ app/lib/
 
 - ホーム画面で「Discovery」スイッチを ON にし、FAB「Simulate Discovery」でキューに曲が追加されます。
 - AppBar 右の `queue_music` アイコンで Player 画面に遷移できます。
+- AppBar 右の `radar` アイコンで `/discover` (Discover ページ) に遷移できます。
 - AppBar の `fingerprint` アイコンで Anonymous Session ('/session') 画面に遷移できます。
+
+## Discover ページ (Issue #3)
+
+Discover タブは近接ピアの検出 UI です。
+
+- **検知トグル Switch**: 上部の Switch を ON にすると `DiscoveryController` が `DiscoverySource.start()` を呼び、波紋アニメーションと共にピア一覧が更新されます。OFF で停止します。
+- **波紋レーダー** (`RippleRadarView`): スキャン中は 3 重の同心円が外側に拡大していくアニメーション。停止中は静的な中心アイコンのみ。
+- **ピア一覧**: `PeerListTile` (匿名 ID 8 桁 + 相対時刻) が `lastSeenAt` 降順で並びます。`PeerAvatar` は `avatarSeed` から決まる 36 通り (色 6 × 形 6) の幾何学アイコン。
+- **空状態**: 「周囲に誰もいません。場所を変えてみてください」を表示。
+- **Bluetooth OFF / 未許可**: 「Bluetooth が無効です。設定を確認してください」のフルスクリーンエラー UI を表示しスキャンは開始しません。
+- **下部サマリ**: 「N 台検知中」 (`peers.length`) を常時表示。`PeerRegistry.prune` により 60 秒間再検知されないピアは自動消去されます。
+
+**Native discovery is a Sprint 03 spike** — only the Platform Channel scaffolding (`proximity_music_app/discovery` MethodChannel + 2 EventChannels) is in place. Real BLE/Nearby スキャンは Issue #4 以降で実装します。本 Sprint のデフォルト Provider は `FakeDiscoverySource` で、デモ用ピア 3 件が 5 秒間隔で出現します。
+
+### iOS シミュレータ / Android エミュレータでのビルド確認
+
+```bash
+cd app
+flutter build ios --no-codesign --simulator   # iOS シミュレータ向けビルド
+flutter build apk --debug                     # Android エミュレータ向けビルド
+flutter run -d ios                            # 実機/シミュレータで起動
+flutter run -d android                        # 実機/エミュレータで起動
+```
+
+Android 12 以降では BLE スキャンに `BLUETOOTH_SCAN` / `BLUETOOTH_CONNECT` (12+) と `ACCESS_FINE_LOCATION` (12 未満) を `AndroidManifest.xml` で宣言済み。実 OS パーミッションのダイアログ呼び出しは Issue #4 でハンドリングします。
 
 ## Anonymous Session (Issue #4)
 
@@ -107,11 +147,6 @@ proximity_music_app/session/disconnects`) は Platform Channel の wire-up
 のみで、iOS/Android のネイティブ側は意図的に `transport_unavailable` を返す
 スタブです。`StubKeyExchange` も sha256 ベースの MVP placeholder で、実
 ECDH (X25519) 鍵交換は Issue #5 以降で差し替えます。
-
-**ブランチ並列の注記**: 本 sprint は main から分岐しており Issue #2
-(SettingsPage) / Issue #3 (DiscoverPage / Peer entity) はマージ前です。
-Discover ピアタップ→セッション開始の wiring と、Settings からの '匿名 ID
-即時更新' UI 統合は両 Issue マージ後の follow-up commit で実施します。
 
 ## オンボーディング / 利用規約 (Issue #2)
 
@@ -137,7 +172,7 @@ Banner は表示中も Discovery スイッチや Player 画面遷移など他機
 
 ## 次の実装ステップ
 
-- 近接通信: Platform Channel 経由で MultipeerConnectivity (iOS) / Nearby Connections (Android) のスパイク。
+- 近接通信 (Issue #4 以降): Platform Channel 経由で CoreBluetooth (iOS) / Nearby Connections (Android) の実装本体を `NativeDiscoverySource` の channel 先に組み込みます。
 - 再生: `just_audio` + `audio_service` でバックグラウンド再生を実装、モックキューと差し替え。
 - ストレージ: Hive / Drift でお気に入り・ブロックリスト・キューを永続化。
 - バックエンド: Cloud Run + Firestore / Cloud SQL で匿名 ID / ブロックリスト / メトリクス API を用意し、Feature Flag で段階導入。

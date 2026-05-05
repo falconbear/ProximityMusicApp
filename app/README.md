@@ -47,18 +47,26 @@ flutter test
 
 CI (`.github/workflows/flutter-ci.yml`) は subosito/flutter-action を使い、push と pull_request の両方で `flutter pub get` / `dart format --set-exit-if-changed` / `flutter analyze` / `flutter test` を実行します。
 
-## ディレクトリ構成 (Issue #1 で導入した層分離)
+## ディレクトリ構成 (Issue #1 で導入した層分離 + Issue #6 で拡張)
 
 ```
 app/lib/
-├── main.dart                                    # 16 行: runApp のみ + ProximityMusicApp の re-export
+├── main.dart                                    # runApp + ProximityMusicApp の re-export
 ├── app.dart                                     # ProximityMusicApp (MaterialApp.router + GoRouter)
 ├── domain/
-│   └── entities/
-│       └── track.dart                           # Track entity (純 Dart)
+│   ├── entities/
+│   │   └── track.dart                           # Track entity (純 Dart)
+│   └── playback/                                # Issue #6: 純 Dart 再生ドメイン
+│       ├── playback_queue.dart                  # FIFO キュー
+│       ├── favorites_store.dart                 # in-memory お気に入り Set
+│       ├── audio_gateway.dart                   # 抽象: play(Track)/stop()
+│       ├── playback_track_source.dart           # 抽象: Stream<Track>
+│       └── playback_controller.dart             # キュー + favorites + ゲートウェイ
 ├── data/
 │   └── services/
-│       └── audio_service.dart                   # just_audio をラップ
+│       ├── audio_service.dart                   # just_audio をラップ (AudioGateway 実装)
+│       ├── fake_track_source.dart               # テスト / 模擬 Discovery 用
+│       └── recording_audio_gateway.dart         # widgetTest 用 Recording fake
 └── presentation/
     ├── state/
     │   └── providers.dart                       # Riverpod providers
@@ -70,6 +78,14 @@ app/lib/
 ```
 
 依存方向は `presentation → data → domain` の単方向。Domain は Flutter / Riverpod / just_audio / go_router を import しません。
+
+### Issue #6 再生ドメイン (`domain/playback/`)
+
+- **PlaybackQueue**: 受信完了 Track の FIFO。`enqueue` / `skip` / `clear`。
+- **FavoritesStore**: `Set<Track>` ベースの in-memory お気に入り。`pickShuffled(Random)` でフォールバック曲を選ぶ (Issue #9 で永続化、#10 で設定 UI)。
+- **AudioGateway** (抽象): `play(Track)` / `stop()` のみ。`AudioService` が本実装、`RecordingAudioGateway` がテスト fake。
+- **PlaybackTrackSource** (抽象): `Stream<Track>`。Issue #5 の本物の `TrackReceiver` がここに繋がる予定。本 Sprint では `FakeTrackSource` のみ提供。
+- **PlaybackController**: 受信→自動再生 / 再生中→キュー追加 / スキップ→次曲 / 空キュー→お気に入りフォールバック (ON 時) or 停止。Riverpod 側 (`playbackControllerProvider`) が `nowPlayingProvider` / `queueProvider` への投影をブリッジする。
 
 ## モックの使い方
 

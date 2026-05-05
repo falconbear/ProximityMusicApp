@@ -1,1 +1,8 @@
 {"ts": "2026-04-29T10:25:56Z", "actor": "controller", "event": "issue_initialized", "issue_id": "6", "data": {"title": "受信即時再生 + 自動再生キュー", "branch": "sprint/06-playback-queue"}}
+{"ts": "2026-05-05T14:28:54Z", "actor": "generator", "event": "contract_submitted", "issue_id": "6", "from_state": "PLANNED", "to_state": "CONTRACT_REVIEW", "data": {"attempt": 1}}
+{"ts": "2026-05-05T14:31:45Z", "actor": "evaluator", "event": "contract_approved", "issue_id": "6", "from_state": "CONTRACT_REVIEW", "to_state": "CONTRACT_APPROVED", "data": {"feedback_ref": "docs/feedback/issue-6-contract.md"}}
+{"ts": "2026-05-05T14:34:53Z", "actor": "generator", "event": "tdd_red_recorded", "issue_id": "6", "data": {"commit_sha": "4b8a9d933391ff3e5dd384e86bdbe5af45fc2bf9", "phase": "red"}}
+{"ts": "2026-05-05T14:44:36Z", "actor": "generator", "event": "tdd_green_recorded", "issue_id": "6", "data": {"commit_sha": "3570e0db132849268a6c14b294f9d662dc38c6dc", "phase": "green"}}
+{"ts": "2026-05-05T14:49:13Z", "actor": "generator", "event": "implementation_submitted", "issue_id": "6", "to_state": "READY_FOR_REVIEW", "data": {"attempt": 1}}
+{"ts": "2026-05-05T14:54:51Z", "actor": "evaluator", "event": "implementation_passed", "issue_id": "6", "from_state": "READY_FOR_REVIEW", "to_state": "PASSED", "data": {"qa_ref": ".ai/work/6/qa.json", "feedback_ref": "docs/feedback/issue-6.md"}}
+{"ts": "2026-05-05T14:55:58Z", "actor": "parent", "event": "pr_opened", "issue_id": "6", "data": {"pr_number": 19, "project_item_id": null}}

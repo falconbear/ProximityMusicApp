@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0",
+  "issue_id": "6",
+  "status": "review",
+  "locked": false,
+  "approved_at": null,
+  "approved_by": null,
+  "scope": [
+    "Domain layer: PlaybackQueue (純 Dart) を新規追加。受信完了 Track を取り込み、`enqueue(Track)` / `skip()` / `currentTrack` / `upcoming` / `isEmpty` / `clear()` を公開し、空キュー時の自動フォールバック判定 (お気に入りシャッフル ON/OFF) を内部に持つ。just_audio / Riverpod / Flutter には依存しない。",
+    "Domain layer: PlaybackTrackSource (抽象) を新規追加。受信完了イベントを 1 本のストリーム/コールバックで PlaybackQueue に流す入口を定義する (Issue #4/#5 の TrackReceiver はこのインターフェースに後で適合させる前提、本 Issue ではテスト用 FakeTrackSource を data 層に置く)。",
+    "Domain layer: お気に入り集合 (favorites) を扱う FavoritesStore (純 Dart、in-memory、Set<Track>) を新規追加。`add(Track)` / `remove(Track)` / `contains(Track)` / `pickShuffled()` / `isEmpty` を公開する (永続化は Issue #9 / 設定は #10 の範疇、ここはメモリのみ)。",
+    "Domain layer: PlaybackController (純 Dart、PlaybackQueue + FavoritesStore + AudioGateway 抽象) を新規追加。受信→自動再生 / 再生中→キュー追加 / スキップ→次曲 / キュー空時→ (お気に入り fallback ON ならシャッフル開始 / OFF または favorites 空なら停止 + nowPlaying=null) のロジックを保持する。AudioGateway は `play(Track)` / `stop()` のみを持つ純粋抽象 (just_audio 詳細を逆依存させない)。",
+    "Data layer: 既存 AudioService を AudioGateway に適合させ、PlaybackController を Riverpod から組み立てる薄いラッパを追加する (既存の AudioService クラス構造は破壊しない)。in-memory FakeTrackSource を data/services/ に追加 (テスト + DashboardPage の `_simulateDiscovery` ボタンから利用する切り口にする)。",
+    "Presentation layer: providers.dart に playbackControllerProvider / favoritesStoreProvider / favoritesFallbackEnabledProvider (StateProvider<bool>, default true) / playbackTrackSourceProvider を追加する。既存 queueProvider / nowPlayingProvider は PlaybackController が書き換える内部状態のミラーとして整合させる。",
+    "Presentation layer: MiniPlayer に「お気に入り」トグル (アイコン: Icons.favorite/favorite_border) を追加する。タップで FavoritesStore に対し add/remove し、UI に反映する。スキップは PlaybackController.skip() を呼ぶ形に置き換える。",
+    "Presentation layer: DashboardPage の _simulateDiscovery を「FakeTrackSource に Track を emit させる」呼び出しに置き換え、PlaybackController 経由で受信→再生フローが流れることを通す。Discover ビューへの自動復帰挙動 (キュー空 + お気に入り 0 件 + 再生終了) を担保する。既存のスイッチ ON/OFF 文言や 'Discovery Paused'/'Discovery Active' 表示は変えない。",
+    "ドキュメント: app/README.md (もしくは lib/playback/README.md) に PlaybackController / PlaybackQueue / FavoritesStore / AudioGateway / PlaybackTrackSource の責務と Issue #5 (TrackReceiver) との接続点を 30 行以内で記す。"
+  ],
+  "out_of_scope": [
+    "Issue #5 で実装される本物の TrackReceiver / SessionTransport / 暗号化解除パイプラインへの直接統合 (PlaybackTrackSource インターフェースを介して後で接続するに留める。本 Sprint では FakeTrackSource のみ通す)。",
+    "Issue #4 の匿名セッション / ID ローテーション。",
+    "Issue #7 のバックグラウンド再生最適化 / メディア通知 / lock screen integration。'バックグラウンドでも継続' は #7 の責務とし、本 Issue は just_audio が前面再生中に動くことのみを保証する。",
+    "Issue #8 の楽曲スキップ履歴永続化 / ピアブロック / お気に入りフィルタリング画面。本 Issue の FavoritesStore は in-memory のみで、設定 OFF 永続化や履歴永続化は #8 / #10 / #9 で扱う。",
+    "Issue #9 の受信ライブラリ画面 / ストレージ上限自動クリーンアップ。",
+    "Issue #10 の電池消費・スキャン制御・省電力モード・自動 OFF / 設定画面。お気に入りフォールバック ON/OFF の永続化と設定画面 UI は本 Sprint では未実装。providers の StateProvider<bool> として in-memory 公開のみ。",
+    "Issue #11 のメトリクス / ログ。",
+    "クロスフェード / イコライザ / レコメンド / プレイリスト編集。",
+    "重複楽曲検出 (内容ハッシュ判定) — Issue #5 / #9 の責務。",
+    "音源アセットの差し替え / 30〜90 秒の短尺サンプル長制御 (#5 の整合性検証範疇)。"
+  ],
+  "success_criteria": [
+    "リポジトリ構造: `test -f app/lib/domain/playback/playback_queue.dart && test -f app/lib/domain/playback/playback_controller.dart && test -f app/lib/domain/playback/favorites_store.dart && test -f app/lib/domain/playback/audio_gateway.dart && test -f app/lib/domain/playback/playback_track_source.dart` が 0 終了する (5 ファイルすべて存在)。",
+    "PlaybackQueue: 空キューに `enqueue(t1)` 後、`currentTrack == t1`、`upcoming.isEmpty == true`、`isEmpty == false`。続けて `enqueue(t2)` 後、`currentTrack == t1`、`upcoming == [t2]`。`skip()` 後、`currentTrack == t2`、`upcoming.isEmpty == true`。再度 `skip()` 後、`currentTrack == null`、`isEmpty == true`。これら 4 アサーションを満たす単体テストが pass する。",
+    "PlaybackController.onTrackReceived(Track): nowPlaying が null のとき呼ばれると AudioGateway.play(track) が **同期的に 1 回** 呼ばれる (Future の await 含めて 100ms 以内、テストでは FakeAudioGateway の callLog で検証)。nowPlaying が非 null のときは play は呼ばれず、PlaybackQueue.upcoming に末尾追加される。これら 2 ケースの単体テストが pass する。",
+    "PlaybackController.skip(): 現在曲がありキューが非空のとき、AudioGateway.play(next) が 1 回呼ばれる。現在曲がありキューが空かつ favoritesFallbackEnabled=false (または FavoritesStore.isEmpty) のとき、AudioGateway.stop() が呼ばれ PlaybackController.nowPlaying は null になる。現在曲がありキューが空かつ favoritesFallbackEnabled=true かつ FavoritesStore に 1 件以上あるとき、AudioGateway.play(<favorites の 1 件>) が呼ばれる (シード固定 Random で決定的に検証)。これら 3 ケースの単体テストが pass する。",
+    "FavoritesStore: `add` は冪等 (同一 Track を 2 回 add しても要素数 1)、`remove(notExisting)` は no-op、`pickShuffled(Random(42))` は要素ありなら必ず非 null を返し、空なら null を返す。これら 3 アサーションを含む単体テストが pass する。",
+    "Presentation 統合: ProviderScope 配下で playbackTrackSourceProvider に Track を emit すると、nowPlayingProvider と queueProvider が PlaybackController を介して更新される (widgetTest で Fake AudioGateway を override し、emit→pump→nowPlayingProvider の値検証で確認)。",
+    "MiniPlayer: nowPlaying 非 null のとき favorite アイコンが表示される (既存テストでカバーされない箇所に新規 widgetTest を追加)。タップで FavoritesStore.contains(currentTrack) が true になり、再タップで false に戻る (toggle)。",
+    "Discover 復帰: PlaybackController.skip() を呼びキューが空 + favorites 空 + favoritesFallbackEnabled=true / false いずれでも nowPlaying が null になる。MiniPlayer は nowPlaying==null で SizedBox.shrink を返すため、既存実装と整合し画面下部から消える (widgetTest で `find.byType(MiniPlayer)` の child が空であることを確認)。",
+    "回帰なし: 既存 `app/test/widget_test.dart` (3 件) と `app/test/domain/track_test.dart` (4 件) は **未改変** で全て pass する (`flutter test --reporter compact` で 0 failure)。",
+    "性能 (構造的保証): PlaybackController.onTrackReceived は同期処理 + AudioGateway.play への単一呼び出しのみで、UI 側の `await` チェーンに `Future.delayed` を含まない (grep `Future\\.delayed` を `app/lib/domain/playback/` 配下にかけて 0 件)。スキップ実装も同様。",
+    "Lint/Format: `cd app && flutter analyze` がエラーなし、`cd app && dart format --set-exit-if-changed .` が exit 0。",
+    "ビルド: `cd app && flutter test --reporter compact` が exit 0 (新規追加テスト + 既存テスト全 pass)。"
+  ],
+  "test_plan": [
+    "[RED-1] Domain unit test: `app/test/domain/playback/playback_queue_test.dart` を新規作成。`enqueue` / `currentTrack` / `upcoming` / `skip` / `isEmpty` / `clear` の 4 シナリオ (空に 1 件投入 / 連続 2 件 / skip で進む / 全 skip で空) をテストする。期待: `import 'package:proximity_music_app/domain/playback/playback_queue.dart';` が解決できず compile fail することで RED を構成する。",
+    "[RED-2] Domain unit test: `app/test/domain/playback/favorites_store_test.dart` を新規作成。`add` 冪等性 / `remove` の no-op / `pickShuffled(Random(42))` の決定性 / 空集合で null を 4 ケーステスト。期待: import 解決失敗で RED。",
+    "[RED-3] Domain unit test: `app/test/domain/playback/playback_controller_test.dart` を新規作成。`FakeAudioGateway`（callLog: List<String> に 'play(<title>)' / 'stop()' を append）と `Random(42)` を注入する PlaybackController を組み立て、(a) nowPlaying null + onTrackReceived(t1) → callLog == ['play(t1)']、(b) nowPlaying あり + onTrackReceived(t2) → callLog == ['play(t1)']（t2 は upcoming 末尾追加のみ）、(c) skip with non-empty queue → callLog 末尾が 'play(<next>)'、(d) skip with empty queue + favorites empty → callLog 末尾が 'stop()' かつ nowPlaying==null、(e) skip with empty queue + favorites 1 件 + fallback ON → callLog 末尾が 'play(<fav>)' の 5 ケース。期待: 全ケースで PlaybackController が未実装のため RED。",
+    "[RED-4] Widget integration test: `app/test/presentation/playback_integration_test.dart` を新規作成。`ProviderScope.overrides` で audioGatewayProvider を `RecordingAudioGateway` に差し替え、playbackTrackSourceProvider に `FakeTrackSource` を注入。ProximityMusicApp を pumpWidget し、FakeTrackSource.emit(t1) → tester.pump() で nowPlayingProvider == t1、queueProvider.length == 0 を検証 (再生中のため即時再生される)。続いて FakeTrackSource.emit(t2) → nowPlaying は t1 のまま、queueProvider == [t2] を検証。期待: providers / FakeTrackSource / RecordingAudioGateway 未実装で RED。",
+    "[RED-5] Widget integration test (続): 同ファイル内に skip 系シナリオを追加。t1 再生中で t2 enqueue 済み状態から skip → nowPlaying == t2、queue.isEmpty に遷移。さらに skip → favorites 空 + fallback ON のとき nowPlaying == null になり MiniPlayer が `find.byType(MiniPlayer)` の `descendant` で SizedBox に縮退することを検証。期待: skip ハンドラ未配線で RED。",
+    "[RED-6] Widget test: `app/test/presentation/mini_player_favorite_test.dart` を新規作成。MiniPlayer を ProviderScope (nowPlayingProvider に t1 を初期注入) で pump、`find.byIcon(Icons.favorite_border)` が 1 件、タップして pump 後 `find.byIcon(Icons.favorite)` が 1 件、再タップで戻ることを検証。期待: お気に入りアイコン未追加で RED。",
+    "[RED-7] Widget test: 既存テスト `widget_test.dart` の `Discovery switch toggles state` が壊れないことを保証する Sentinel として、本 Sprint で追加するテストはどれも既存テストファイルを変更しないこと、`git diff --name-only main..HEAD -- app/test/widget_test.dart app/test/domain/track_test.dart` が空であることを CI/local で確認する手順をテスト計画に明記する (test 改変禁止チェック)。",
+    "[GREEN-1] Domain 実装: `app/lib/domain/playback/playback_queue.dart` を最小実装。内部 `List<Track> _q`、`enqueue` は末尾追加、`currentTrack` は `_q.isEmpty ? null : _q.first`、`upcoming` は `_q.length <= 1 ? const [] : _q.sublist(1)`、`skip()` は `_q.removeAt(0)` (空ガード付き)、`isEmpty` / `clear()` を提供。RED-1 を全通す最小コードに留める (リスナー / イベントは追加しない)。",
+    "[GREEN-2] Domain 実装: `favorites_store.dart` を Set<Track> ベースで実装し、`pickShuffled(Random)` は `_set.elementAt(rng.nextInt(_set.length))` で 1 件返す。空のとき null。RED-2 を通す。",
+    "[GREEN-3] Domain 実装: `audio_gateway.dart` (abstract class)、`playback_track_source.dart` (abstract class with `Stream<Track> get tracks` または `void Function(Track) listen`)、`playback_controller.dart` を実装。Controller は queue / favorites / gateway / fallbackEnabled getter / Random を保持し、(a)〜(e) の 5 ケースを通す最小ロジック。RED-3 を通す。",
+    "[GREEN-4] Data 実装: `app/lib/data/services/recording_audio_gateway.dart` (テスト用) と `fake_track_source.dart` (Stream ベースの emit 関数つき) を追加、既存 AudioService に `implements AudioGateway` を付与しメソッド整合 (`play(Track)` / `stop()` を満たす) を取る。",
+    "[GREEN-5] Presentation 実装: providers.dart に audioGatewayProvider / favoritesStoreProvider / favoritesFallbackEnabledProvider / playbackTrackSourceProvider / playbackControllerProvider を追加。既存 queueProvider / nowPlayingProvider は PlaybackController の状態を反映するために PlaybackController から `ref.read(...).state = ...` で更新する Bridge を入れる。",
+    "[GREEN-6] Presentation 実装: MiniPlayer にお気に入りアイコンを追加 (Skip ボタン左)、PlaybackController.skip() を呼ぶよう IconButton(onPressed) を更新。RED-5/6 を通す。",
+    "[GREEN-7] Presentation 実装: DashboardPage._simulateDiscovery を FakeTrackSource.emit 呼び出しに置き換える (既存ボタン名 'Simulate Discovery' は維持)。RED-4 を通す。",
+    "[REFACTOR (任意)]: PlaybackController の getter 命名整理 / providers の `.notifier.state =` 呼び出しを 1 箇所のサブスクライブにまとめる程度の整理。テストを変えない範囲で。",
+    "[Verification-1] `cd app && flutter analyze` がエラー 0。",
+    "[Verification-2] `cd app && dart format --set-exit-if-changed .` が exit 0 (instinct: dart_format_before_commit)。",
+    "[Verification-3] `cd app && flutter test --reporter compact` が exit 0 (新規 + 既存全 pass)。",
+    "[Verification-4] `git diff --name-only main..HEAD -- app/test/widget_test.dart app/test/domain/track_test.dart` の出力が空 (既存テスト未改変)。",
+    "[Verification-5] `grep -RIn 'Future\\.delayed' app/lib/domain/playback/` の結果が 0 件 (構造的性能保証)。",
+    "[Verification-6] `test -f app/lib/domain/playback/playback_queue.dart && test -f app/lib/domain/playback/favorites_store.dart && test -f app/lib/domain/playback/playback_controller.dart && test -f app/lib/domain/playback/audio_gateway.dart && test -f app/lib/domain/playback/playback_track_source.dart` が exit 0。"
+  ],
+  "revision_history": [
+    {
+      "attempt": 1,
+      "status": "drafted",
+      "at": "2026-05-05T14:27:04Z",
+      "by": "generator",
+      "feedback_ref": null
+    }
+  ]
+}

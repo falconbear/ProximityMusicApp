@@ -41,7 +41,7 @@ class _StubIntegrityVerifier implements IntegrityVerifier {
 /// Test double for PayloadDecryptor whose decrypt result / failure is
 /// configurable per test. encryptForTest is unused in receiver tests.
 class _StubPayloadDecryptor implements PayloadDecryptor {
-  _StubPayloadDecryptor({this.shouldThrow = false, this.plaintext});
+  _StubPayloadDecryptor({this.shouldThrow = false});
   final bool shouldThrow;
   final List<int>? plaintext;
   int decryptCallCount = 0;
@@ -54,7 +54,7 @@ class _StubPayloadDecryptor implements PayloadDecryptor {
   }) async {
     decryptCallCount++;
     if (shouldThrow) {
-      throw DecryptionFailure('stub: forced failure');
+      throw const DecryptionFailure('stub: forced failure');
     }
     return plaintext ?? ciphertext;
   }
@@ -106,7 +106,8 @@ class _StubDuplicateDetector implements DuplicateTrackDetector {
 TrackTransferManifest _manifest({
   int chunkCount = 2,
   int totalBytes = 8,
-  String sha256Hex = 'deadbeef' * 8, // 64 hex chars (test-only fixture)
+  String sha256Hex =
+      'deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
 }) {
   return TrackTransferManifest(
     chunkCount: chunkCount,
@@ -127,101 +128,134 @@ void main() {
   final nonce = List<int>.generate(12, (i) => i);
 
   group('TrackReceiver', () {
-    test('completed happy path: chunks assembled, verified, persisted', () async {
-      final manifest = _manifest(chunkCount: 2, totalBytes: 8);
-      final transport = FakeChunkTransport(chunks: [
-        TrackChunk(
-            sequence: 0, payload: const [1, 2, 3, 4], isLast: false),
-        TrackChunk(
-            sequence: 1, payload: const [5, 6, 7, 8], isLast: true),
-      ]);
-      final verifier = _StubIntegrityVerifier(result: true);
-      final decryptor = _StubPayloadDecryptor();
-      final detector = _StubDuplicateDetector(duplicate: false);
-      final persist = _PersistRecorder();
+    test(
+      'completed happy path: chunks assembled, verified, persisted',
+      () async {
+        final manifest = _manifest(chunkCount: 2, totalBytes: 8);
+        final transport = FakeChunkTransport(
+          chunks: [
+            const TrackChunk(
+              sequence: 0,
+              payload: const [1, 2, 3, 4],
+              isLast: false,
+            ),
+            const TrackChunk(
+              sequence: 1,
+              payload: const [5, 6, 7, 8],
+              isLast: true,
+            ),
+          ],
+        );
+        final verifier = _StubIntegrityVerifier(result: true);
+        final decryptor = _StubPayloadDecryptor();
+        final detector = _StubDuplicateDetector(duplicate: false);
+        final persist = _PersistRecorder();
 
-      final receiver = TrackReceiver(
-        manifest: manifest,
-        transport: transport,
-        integrityVerifier: verifier,
-        payloadDecryptor: decryptor,
-        duplicateDetector: detector,
-        persistEncrypted: persist.call,
-        decryptionKey: key,
-        decryptionNonce: nonce,
-      );
+        final receiver = TrackReceiver(
+          manifest: manifest,
+          transport: transport,
+          integrityVerifier: verifier,
+          payloadDecryptor: decryptor,
+          duplicateDetector: detector,
+          persistEncrypted: persist.call,
+          decryptionKey: key,
+          decryptionNonce: nonce,
+        );
 
-      final events = await receiver.receive().toList();
+        final events = await receiver.receive().toList();
 
-      expect(events, isNotEmpty);
-      expect(events.last.status, TrackTransferStatus.completed);
-      expect(persist.callCount, 1);
-      expect(persist.lastCiphertext, [1, 2, 3, 4, 5, 6, 7, 8]);
-      expect(persist.lastManifest?.sha256Hex, manifest.sha256Hex);
-    });
+        expect(events, isNotEmpty);
+        expect(events.last.status, TrackTransferStatus.completed);
+        expect(persist.callCount, 1);
+        expect(persist.lastCiphertext, [1, 2, 3, 4, 5, 6, 7, 8]);
+        expect(persist.lastManifest?.sha256Hex, manifest.sha256Hex);
+      },
+    );
 
-    test('integrity hash mismatch -> abortedIntegrity, persist not called',
-        () async {
-      final manifest = _manifest();
-      final transport = FakeChunkTransport(chunks: [
-        TrackChunk(
-            sequence: 0, payload: const [1, 2, 3, 4], isLast: false),
-        TrackChunk(
-            sequence: 1, payload: const [5, 6, 7, 8], isLast: true),
-      ]);
-      final verifier = _StubIntegrityVerifier(result: false); // tamper detected
-      final decryptor = _StubPayloadDecryptor();
-      final detector = _StubDuplicateDetector(duplicate: false);
-      final persist = _PersistRecorder();
+    test(
+      'integrity hash mismatch -> abortedIntegrity, persist not called',
+      () async {
+        final manifest = _manifest();
+        final transport = FakeChunkTransport(
+          chunks: [
+            const TrackChunk(
+              sequence: 0,
+              payload: const [1, 2, 3, 4],
+              isLast: false,
+            ),
+            const TrackChunk(
+              sequence: 1,
+              payload: const [5, 6, 7, 8],
+              isLast: true,
+            ),
+          ],
+        );
+        final verifier = _StubIntegrityVerifier(
+          result: false,
+        ); // tamper detected
+        final decryptor = _StubPayloadDecryptor();
+        final detector = _StubDuplicateDetector(duplicate: false);
+        final persist = _PersistRecorder();
 
-      final receiver = TrackReceiver(
-        manifest: manifest,
-        transport: transport,
-        integrityVerifier: verifier,
-        payloadDecryptor: decryptor,
-        duplicateDetector: detector,
-        persistEncrypted: persist.call,
-        decryptionKey: key,
-        decryptionNonce: nonce,
-      );
+        final receiver = TrackReceiver(
+          manifest: manifest,
+          transport: transport,
+          integrityVerifier: verifier,
+          payloadDecryptor: decryptor,
+          duplicateDetector: detector,
+          persistEncrypted: persist.call,
+          decryptionKey: key,
+          decryptionNonce: nonce,
+        );
 
-      final events = await receiver.receive().toList();
+        final events = await receiver.receive().toList();
 
-      // SC[6] / TP-26: abortedIntegrity identifier + PersistEncrypted never called.
-      expect(events.last.status, TrackTransferStatus.abortedIntegrity);
-      expect(persist.callCount, 0);
-    });
+        // SC[6] / TP-26: abortedIntegrity identifier + PersistEncrypted never called.
+        expect(events.last.status, TrackTransferStatus.abortedIntegrity);
+        expect(persist.callCount, 0);
+      },
+    );
 
-    test('decrypt preflight failure (wrong cipher / key) -> abortedIntegrity',
-        () async {
-      final manifest = _manifest();
-      final transport = FakeChunkTransport(chunks: [
-        TrackChunk(
-            sequence: 0, payload: const [1, 2, 3, 4], isLast: false),
-        TrackChunk(
-            sequence: 1, payload: const [5, 6, 7, 8], isLast: true),
-      ]);
-      final verifier = _StubIntegrityVerifier(result: true);
-      final decryptor = _StubPayloadDecryptor(shouldThrow: true);
-      final detector = _StubDuplicateDetector(duplicate: false);
-      final persist = _PersistRecorder();
+    test(
+      'decrypt preflight failure (wrong cipher / key) -> abortedIntegrity',
+      () async {
+        final manifest = _manifest();
+        final transport = FakeChunkTransport(
+          chunks: [
+            const TrackChunk(
+              sequence: 0,
+              payload: const [1, 2, 3, 4],
+              isLast: false,
+            ),
+            const TrackChunk(
+              sequence: 1,
+              payload: const [5, 6, 7, 8],
+              isLast: true,
+            ),
+          ],
+        );
+        final verifier = _StubIntegrityVerifier(result: true);
+        final decryptor = _StubPayloadDecryptor(shouldThrow: true);
+        final detector = _StubDuplicateDetector(duplicate: false);
+        final persist = _PersistRecorder();
 
-      final receiver = TrackReceiver(
-        manifest: manifest,
-        transport: transport,
-        integrityVerifier: verifier,
-        payloadDecryptor: decryptor,
-        duplicateDetector: detector,
-        persistEncrypted: persist.call,
-        decryptionKey: key,
-        decryptionNonce: nonce,
-      );
+        final receiver = TrackReceiver(
+          manifest: manifest,
+          transport: transport,
+          integrityVerifier: verifier,
+          payloadDecryptor: decryptor,
+          duplicateDetector: detector,
+          persistEncrypted: persist.call,
+          decryptionKey: key,
+          decryptionNonce: nonce,
+        );
 
-      final events = await receiver.receive().toList();
-      expect(events.last.status, TrackTransferStatus.abortedIntegrity);
-      // Persistence MUST NOT happen if decrypt preflight fails.
-      expect(persist.callCount, 0);
-    });
+        final events = await receiver.receive().toList();
+        expect(events.last.status, TrackTransferStatus.abortedIntegrity);
+        // Persistence MUST NOT happen if decrypt preflight fails.
+        expect(persist.callCount, 0);
+      },
+    );
 
     test('transport disconnect (addError) -> abortedDisconnected, '
         'persist not called', () async {
@@ -229,8 +263,11 @@ void main() {
       // Build a transport that emits one chunk then errors mid-stream.
       final transport = FakeChunkTransport(
         chunks: [
-          TrackChunk(
-              sequence: 0, payload: const [1, 2, 3, 4], isLast: false),
+          const TrackChunk(
+            sequence: 0,
+            payload: const [1, 2, 3, 4],
+            isLast: false,
+          ),
         ],
         // Simulate network drop using Stream.addError on the underlying
         // controller (TP-25 (c) requires addError / Stream.error / throw).
@@ -260,94 +297,127 @@ void main() {
       expect(persist.callCount, 0);
     });
 
-    test('isDuplicate=true -> abortedDuplicate, persist callCount equals 0',
-        () async {
-      final manifest = _manifest();
-      final transport = FakeChunkTransport(chunks: [
-        TrackChunk(
-            sequence: 0, payload: const [1, 2, 3, 4], isLast: true),
-      ]);
-      final verifier = _StubIntegrityVerifier(result: true);
-      final decryptor = _StubPayloadDecryptor();
-      final detector = _StubDuplicateDetector(duplicate: true);
-      final persist = _PersistRecorder();
-
-      final receiver = TrackReceiver(
-        manifest: manifest,
-        transport: transport,
-        integrityVerifier: verifier,
-        payloadDecryptor: decryptor,
-        duplicateDetector: detector,
-        persistEncrypted: persist.call,
-        decryptionKey: key,
-        decryptionNonce: nonce,
-      );
-
-      final events = await receiver.receive().toList();
-      expect(events.last.status, TrackTransferStatus.abortedDuplicate);
-      // TP-24: PersistEncrypted callback must NOT be called when duplicate.
-      expect(persist.callCount, equals(0));
-    });
-
-    test('progress emit: receivedBytes is monotonically non-decreasing',
-        () async {
-      final manifest = _manifest(chunkCount: 4, totalBytes: 16);
-      final transport = FakeChunkTransport(chunks: [
-        TrackChunk(
-            sequence: 0, payload: const [1, 2, 3, 4], isLast: false),
-        TrackChunk(
-            sequence: 1, payload: const [5, 6, 7, 8], isLast: false),
-        TrackChunk(
-            sequence: 2, payload: const [9, 10, 11, 12], isLast: false),
-        TrackChunk(
-            sequence: 3, payload: const [13, 14, 15, 16], isLast: true),
-      ]);
-      final verifier = _StubIntegrityVerifier(result: true);
-      final decryptor = _StubPayloadDecryptor();
-      final detector = _StubDuplicateDetector(duplicate: false);
-      final persist = _PersistRecorder();
-
-      final receiver = TrackReceiver(
-        manifest: manifest,
-        transport: transport,
-        integrityVerifier: verifier,
-        payloadDecryptor: decryptor,
-        duplicateDetector: detector,
-        persistEncrypted: persist.call,
-        decryptionKey: key,
-        decryptionNonce: nonce,
-      );
-
-      final events = await receiver.receive().toList();
-      final bytesTimeline =
-          events.map((e) => e.receivedBytes).toList();
-
-      // SC[20] / TP-27: bytes-based monotonic non-decreasing.
-      // Use both an explicit pairwise check and greaterThanOrEqualTo to
-      // satisfy TP-27's keyword requirement.
-      for (var i = 1; i < bytesTimeline.length; i++) {
-        expect(
-          bytesTimeline[i],
-          greaterThanOrEqualTo(bytesTimeline[i - 1]),
-          reason: 'receivedBytes must be monotonic non-decreasing',
+    test(
+      'isDuplicate=true -> abortedDuplicate, persist callCount equals 0',
+      () async {
+        final manifest = _manifest();
+        final transport = FakeChunkTransport(
+          chunks: [
+            const TrackChunk(
+              sequence: 0,
+              payload: const [1, 2, 3, 4],
+              isLast: true,
+            ),
+          ],
         );
-      }
-      // totalBytes consistency with manifest.
-      expect(events.last.totalBytes, manifest.totalBytes);
-      // Final receivedBytes reaches totalBytes on completed flow.
-      expect(events.last.status, TrackTransferStatus.completed);
-      expect(events.last.receivedBytes, greaterThanOrEqualTo(manifest.totalBytes));
-    });
+        final verifier = _StubIntegrityVerifier(result: true);
+        final decryptor = _StubPayloadDecryptor();
+        final detector = _StubDuplicateDetector(duplicate: true);
+        final persist = _PersistRecorder();
+
+        final receiver = TrackReceiver(
+          manifest: manifest,
+          transport: transport,
+          integrityVerifier: verifier,
+          payloadDecryptor: decryptor,
+          duplicateDetector: detector,
+          persistEncrypted: persist.call,
+          decryptionKey: key,
+          decryptionNonce: nonce,
+        );
+
+        final events = await receiver.receive().toList();
+        expect(events.last.status, TrackTransferStatus.abortedDuplicate);
+        // TP-24: PersistEncrypted callback must NOT be called when duplicate.
+        expect(persist.callCount, equals(0));
+      },
+    );
+
+    test(
+      'progress emit: receivedBytes is monotonically non-decreasing',
+      () async {
+        final manifest = _manifest(chunkCount: 4, totalBytes: 16);
+        final transport = FakeChunkTransport(
+          chunks: [
+            const TrackChunk(
+              sequence: 0,
+              payload: const [1, 2, 3, 4],
+              isLast: false,
+            ),
+            const TrackChunk(
+              sequence: 1,
+              payload: const [5, 6, 7, 8],
+              isLast: false,
+            ),
+            TrackChunk(
+              sequence: 2,
+              payload: const [9, 10, 11, 12],
+              isLast: false,
+            ),
+            TrackChunk(
+              sequence: 3,
+              payload: const [13, 14, 15, 16],
+              isLast: true,
+            ),
+          ],
+        );
+        final verifier = _StubIntegrityVerifier(result: true);
+        final decryptor = _StubPayloadDecryptor();
+        final detector = _StubDuplicateDetector(duplicate: false);
+        final persist = _PersistRecorder();
+
+        final receiver = TrackReceiver(
+          manifest: manifest,
+          transport: transport,
+          integrityVerifier: verifier,
+          payloadDecryptor: decryptor,
+          duplicateDetector: detector,
+          persistEncrypted: persist.call,
+          decryptionKey: key,
+          decryptionNonce: nonce,
+        );
+
+        final events = await receiver.receive().toList();
+        final bytesTimeline = events.map((e) => e.receivedBytes).toList();
+
+        // SC[20] / TP-27: bytes-based monotonic non-decreasing.
+        // Use both an explicit pairwise check and greaterThanOrEqualTo to
+        // satisfy TP-27's keyword requirement.
+        for (var i = 1; i < bytesTimeline.length; i++) {
+          expect(
+            bytesTimeline[i],
+            greaterThanOrEqualTo(bytesTimeline[i - 1]),
+            reason: 'receivedBytes must be monotonic non-decreasing',
+          );
+        }
+        // totalBytes consistency with manifest.
+        expect(events.last.totalBytes, manifest.totalBytes);
+        // Final receivedBytes reaches totalBytes on completed flow.
+        expect(events.last.status, TrackTransferStatus.completed);
+        expect(
+          events.last.receivedBytes,
+          greaterThanOrEqualTo(manifest.totalBytes),
+        );
+      },
+    );
 
     test('out of order sequence -> abortedIntegrity', () async {
       final manifest = _manifest(chunkCount: 3, totalBytes: 12);
       // Sequence skips from 0 to 2 (missing 1).
-      final transport = FakeChunkTransport(chunks: [
-        TrackChunk(
-            sequence: 0, payload: const [1, 2, 3, 4], isLast: false),
-        TrackChunk(
-            sequence: 2, payload: const [9, 10, 11, 12], isLast: true),
-      ]);
+      final transport = FakeChunkTransport(
+        chunks: [
+          const TrackChunk(
+            sequence: 0,
+            payload: const [1, 2, 3, 4],
+            isLast: false,
+          ),
+          const TrackChunk(
+            sequence: 2,
+            payload: const [9, 10, 11, 12],
+            isLast: true,
+          ),
+        ],
+      );
       final verifier = _StubIntegrityVerifier(result: true);
       final decryptor = _StubPayloadDecryptor();
       final detector = _StubDuplicateDetector(duplicate: false);

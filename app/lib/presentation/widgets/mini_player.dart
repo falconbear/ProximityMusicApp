@@ -29,28 +29,30 @@ class MiniPlayer extends ConsumerWidget {
         decoration: BoxDecoration(
           color: const Color(0xFF181818),
           border: Border(
-            top: BorderSide(
-              color: Colors.white.withOpacity(0.1),
-              width: 0.5,
-            ),
+            top: BorderSide(color: Colors.white.withOpacity(0.1), width: 0.5),
           ),
         ),
         child: Column(
           children: [
             LinearProgressIndicator(
               value: duration.inMilliseconds > 0
-                  ? (position.inMilliseconds / duration.inMilliseconds)
-                      .clamp(0.0, 1.0)
+                  ? (position.inMilliseconds / duration.inMilliseconds).clamp(
+                      0.0,
+                      1.0,
+                    )
                   : 0.0,
               backgroundColor: Colors.white.withOpacity(0.1),
-              valueColor:
-                  const AlwaysStoppedAnimation<Color>(Color(0xFF1DB954)),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                Color(0xFF1DB954),
+              ),
               minHeight: 2,
             ),
             Expanded(
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 child: Row(
                   children: [
                     Container(

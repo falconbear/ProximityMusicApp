@@ -26,20 +26,13 @@ class PlayerPage extends ConsumerWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF1e3c32),
-              Color(0xFF121212),
-              Color(0xFF121212),
-            ],
+            colors: [Color(0xFF1e3c32), Color(0xFF121212), Color(0xFF121212)],
             stops: [0.0, 0.3, 1.0],
           ),
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 24,
-              vertical: 16,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             child: Column(
               children: [
                 Row(
@@ -98,8 +91,7 @@ class PlayerPage extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF1DB954)
-                                    .withOpacity(0.3),
+                                color: const Color(0xFF1DB954).withOpacity(0.3),
                                 blurRadius: 20,
                                 offset: const Offset(0, 8),
                               ),
@@ -191,24 +183,21 @@ class PlayerPage extends ConsumerWidget {
                               children: [
                                 SliderTheme(
                                   data: SliderTheme.of(context).copyWith(
-                                    activeTrackColor:
-                                        const Color(0xFF1DB954),
-                                    inactiveTrackColor:
-                                        Colors.white.withOpacity(0.3),
+                                    activeTrackColor: const Color(0xFF1DB954),
+                                    inactiveTrackColor: Colors.white
+                                        .withOpacity(0.3),
                                     thumbColor: const Color(0xFF1DB954),
                                     trackHeight: 4.0,
-                                    thumbShape:
-                                        const RoundSliderThumbShape(
+                                    thumbShape: const RoundSliderThumbShape(
                                       enabledThumbRadius: 6.0,
                                     ),
                                   ),
                                   child: Slider(
                                     value: duration.inMilliseconds > 0
-                                        ? (position.inMilliseconds
-                                                    .toDouble() /
-                                                duration.inMilliseconds
-                                                    .toDouble())
-                                            .clamp(0.0, 1.0)
+                                        ? (position.inMilliseconds.toDouble() /
+                                                  duration.inMilliseconds
+                                                      .toDouble())
+                                              .clamp(0.0, 1.0)
                                         : 0.0,
                                     onChanged: (value) {
                                       // TODO: Implement seek functionality
@@ -226,16 +215,14 @@ class PlayerPage extends ConsumerWidget {
                                       Text(
                                         _formatDuration(position),
                                         style: TextStyle(
-                                          color: Colors.white
-                                              .withOpacity(0.7),
+                                          color: Colors.white.withOpacity(0.7),
                                           fontSize: 12,
                                         ),
                                       ),
                                       Text(
                                         _formatDuration(duration),
                                         style: TextStyle(
-                                          color: Colors.white
-                                              .withOpacity(0.7),
+                                          color: Colors.white.withOpacity(0.7),
                                           fontSize: 12,
                                         ),
                                       ),
@@ -248,12 +235,9 @@ class PlayerPage extends ConsumerWidget {
                           const SizedBox(height: 16),
                         ],
                         Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16.0,
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
                           child: Row(
-                            mainAxisAlignment:
-                                MainAxisAlignment.spaceEvenly,
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
                               IconButton(
                                 onPressed: audioService.skipNext,
@@ -271,8 +255,9 @@ class PlayerPage extends ConsumerWidget {
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: const Color(0xFF1DB954)
-                                          .withOpacity(0.4),
+                                      color: const Color(
+                                        0xFF1DB954,
+                                      ).withOpacity(0.4),
                                       blurRadius: 16,
                                       offset: const Offset(0, 4),
                                     ),
@@ -310,8 +295,7 @@ class PlayerPage extends ConsumerWidget {
                         ),
                         const SizedBox(height: 16),
                         Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.spaceEvenly,
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             IconButton(
                               onPressed: () {},
@@ -333,11 +317,13 @@ class PlayerPage extends ConsumerWidget {
                               onPressed: nowPlaying == null
                                   ? null
                                   : () {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
                                         SnackBar(
-                                          backgroundColor:
-                                              const Color(0xFF1DB954),
+                                          backgroundColor: const Color(
+                                            0xFF1DB954,
+                                          ),
                                           content: Text(
                                             '${nowPlaying.from} blocked',
                                             style: const TextStyle(

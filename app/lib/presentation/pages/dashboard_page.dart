@@ -26,10 +26,7 @@ class DashboardPage extends ConsumerWidget {
           IconButton(
             tooltip: 'Player',
             onPressed: () => context.go('/player'),
-            icon: const Icon(
-              Icons.queue_music,
-              color: Color(0xFF1DB954),
-            ),
+            icon: const Icon(Icons.queue_music, color: Color(0xFF1DB954)),
           ),
         ],
       ),
@@ -38,10 +35,7 @@ class DashboardPage extends ConsumerWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF1e3c32),
-              Color(0xFF121212),
-            ],
+            colors: [Color(0xFF1e3c32), Color(0xFF121212)],
             stops: [0.0, 0.3],
           ),
         ),
@@ -75,9 +69,7 @@ class DashboardPage extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               Expanded(
-                child: queue.isEmpty
-                    ? _EmptyQueue()
-                    : _QueueList(queue: queue),
+                child: queue.isEmpty ? _EmptyQueue() : _QueueList(queue: queue),
               ),
             ],
           ),
@@ -132,9 +124,7 @@ class DashboardPage extends ConsumerWidget {
                 ),
                 child: Icon(
                   discoveryOn ? Icons.radar : Icons.radar_outlined,
-                  color: discoveryOn
-                      ? const Color(0xFF1DB954)
-                      : Colors.grey,
+                  color: discoveryOn ? const Color(0xFF1DB954) : Colors.grey,
                   size: 32,
                 ),
               ),
@@ -250,11 +240,7 @@ class _NowPlayingCard extends ConsumerWidget {
               ),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
-              Icons.music_note,
-              color: Colors.black,
-              size: 30,
-            ),
+            child: const Icon(Icons.music_note, color: Colors.black, size: 30),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -312,11 +298,7 @@ class _EmptyNowPlaying extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(
-            Icons.music_off,
-            color: Colors.white.withOpacity(0.3),
-            size: 48,
-          ),
+          Icon(Icons.music_off, color: Colors.white.withOpacity(0.3), size: 48),
           const SizedBox(height: 12),
           Text(
             'No music playing',
@@ -408,9 +390,7 @@ class _QueueList extends StatelessWidget {
                 : const Color(0xFF181818),
             borderRadius: BorderRadius.circular(8),
             border: isFirst
-                ? Border.all(
-                    color: const Color(0xFF1DB954).withOpacity(0.3),
-                  )
+                ? Border.all(color: const Color(0xFF1DB954).withOpacity(0.3))
                 : null,
           ),
           child: ListTile(
@@ -424,10 +404,7 @@ class _QueueList extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: isFirst
-                      ? [
-                          const Color(0xFF1DB954),
-                          const Color(0xFF1ed760),
-                        ]
+                      ? [const Color(0xFF1DB954), const Color(0xFF1ed760)]
                       : [Colors.grey.shade700, Colors.grey.shade600],
                 ),
                 borderRadius: BorderRadius.circular(6),

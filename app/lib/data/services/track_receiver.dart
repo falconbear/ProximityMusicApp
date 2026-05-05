@@ -22,10 +22,11 @@ import 'package:proximity_music_app/domain/services/payload_decryptor.dart';
 /// Callback signature for persisting the received (still-encrypted) payload.
 /// Returns the path the file was written to; the caller decides storage policy
 /// (see contract scope[5] / out_of_scope[5]).
-typedef PersistEncrypted = Future<String> Function(
-  List<int> ciphertext,
-  TrackTransferManifest manifest,
-);
+typedef PersistEncrypted =
+    Future<String> Function(
+      List<int> ciphertext,
+      TrackTransferManifest manifest,
+    );
 
 class TrackReceiver {
   TrackReceiver({
@@ -118,8 +119,7 @@ class TrackReceiver {
       totalBytes: manifest.totalBytes,
       status: TrackTransferStatus.verifying,
     );
-    final verified =
-        integrityVerifier.verify(assembled, manifest.sha256Hex);
+    final verified = integrityVerifier.verify(assembled, manifest.sha256Hex);
     if (!verified) {
       yield ReceiveProgress(
         receivedBytes: receivedBytes,

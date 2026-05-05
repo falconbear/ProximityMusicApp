@@ -51,8 +51,7 @@ class AesGcmPayloadDecryptor implements PayloadDecryptor {
     if (ciphertext.length < _macLength) {
       throw const DecryptionFailure('ciphertext shorter than mac length');
     }
-    final cipherBody =
-        ciphertext.sublist(0, ciphertext.length - _macLength);
+    final cipherBody = ciphertext.sublist(0, ciphertext.length - _macLength);
     final macBytes = ciphertext.sublist(ciphertext.length - _macLength);
 
     final secretKey = SecretKey(key);

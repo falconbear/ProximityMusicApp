@@ -21,8 +21,8 @@ class FakeChunkTransport implements ChunkTransport {
   FakeChunkTransport({
     required List<TrackChunk> chunks,
     Object? errorAfterChunks,
-  })  : _chunks = List<TrackChunk>.unmodifiable(chunks),
-        _errorAfterChunks = errorAfterChunks;
+  }) : _chunks = List<TrackChunk>.unmodifiable(chunks),
+       _errorAfterChunks = errorAfterChunks;
 
   final List<TrackChunk> _chunks;
   final Object? _errorAfterChunks;
@@ -38,7 +38,7 @@ class FakeChunkTransport implements ChunkTransport {
           await Future<void>.delayed(Duration.zero);
         }
         if (_errorAfterChunks != null) {
-          controller.addError(_errorAfterChunks!);
+          controller.addError(_errorAfterChunks);
         }
       } finally {
         await controller.close();

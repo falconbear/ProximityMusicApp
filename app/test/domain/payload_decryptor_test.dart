@@ -12,6 +12,8 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:proximity_music_app/domain/entities/track_transfer.dart'
+    show DecryptionFailure;
 import 'package:proximity_music_app/domain/services/payload_decryptor.dart';
 
 void main() {
@@ -21,24 +23,27 @@ void main() {
   final plaintext = utf8.encode('hello world');
 
   group('AesGcmPayloadDecryptor', () {
-    test('decrypts a valid ciphertext back to the original plaintext', () async {
-      final decryptor = AesGcmPayloadDecryptor();
+    test(
+      'decrypts a valid ciphertext back to the original plaintext',
+      () async {
+        final decryptor = AesGcmPayloadDecryptor();
 
-      // Encrypt first to obtain a valid ciphertext under the same algorithm.
-      final ciphertext = await decryptor.encryptForTest(
-        plaintext: plaintext,
-        key: key,
-        nonce: nonce,
-      );
+        // Encrypt first to obtain a valid ciphertext under the same algorithm.
+        final ciphertext = await decryptor.encryptForTest(
+          plaintext: plaintext,
+          key: key,
+          nonce: nonce,
+        );
 
-      final recovered = await decryptor.decrypt(
-        ciphertext: ciphertext,
-        key: key,
-        nonce: nonce,
-      );
+        final recovered = await decryptor.decrypt(
+          ciphertext: ciphertext,
+          key: key,
+          nonce: nonce,
+        );
 
-      expect(utf8.decode(recovered), 'hello world');
-    });
+        expect(utf8.decode(recovered), 'hello world');
+      },
+    );
 
     test('throws when ciphertext is tampered (1 bit flip)', () async {
       final decryptor = AesGcmPayloadDecryptor();
@@ -53,11 +58,7 @@ void main() {
       tampered[0] = tampered[0] ^ 0x01;
 
       expect(
-        () => decryptor.decrypt(
-          ciphertext: tampered,
-          key: key,
-          nonce: nonce,
-        ),
+        () => decryptor.decrypt(ciphertext: tampered, key: key, nonce: nonce),
         throwsA(isA<DecryptionFailure>()),
       );
     });

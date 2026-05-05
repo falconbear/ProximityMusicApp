@@ -46,44 +46,46 @@ void main() {
       expect(a.hashCode, equals(b.hashCode));
     });
 
-    test('two Tracks with different fields are not equal (== returns false)',
-        () {
-      const a = Track(
-        title: 'Song A',
-        from: 'Alice',
-        filePath: 'assets/audio/song_a.mp3',
-        duration: Duration(minutes: 3, seconds: 14),
-      );
-      const differentTitle = Track(
-        title: 'Song B',
-        from: 'Alice',
-        filePath: 'assets/audio/song_a.mp3',
-        duration: Duration(minutes: 3, seconds: 14),
-      );
-      const differentFrom = Track(
-        title: 'Song A',
-        from: 'Bob',
-        filePath: 'assets/audio/song_a.mp3',
-        duration: Duration(minutes: 3, seconds: 14),
-      );
-      const differentFilePath = Track(
-        title: 'Song A',
-        from: 'Alice',
-        filePath: 'assets/audio/other.mp3',
-        duration: Duration(minutes: 3, seconds: 14),
-      );
-      const differentDuration = Track(
-        title: 'Song A',
-        from: 'Alice',
-        filePath: 'assets/audio/song_a.mp3',
-        duration: Duration(minutes: 4),
-      );
+    test(
+      'two Tracks with different fields are not equal (== returns false)',
+      () {
+        const a = Track(
+          title: 'Song A',
+          from: 'Alice',
+          filePath: 'assets/audio/song_a.mp3',
+          duration: Duration(minutes: 3, seconds: 14),
+        );
+        const differentTitle = Track(
+          title: 'Song B',
+          from: 'Alice',
+          filePath: 'assets/audio/song_a.mp3',
+          duration: Duration(minutes: 3, seconds: 14),
+        );
+        const differentFrom = Track(
+          title: 'Song A',
+          from: 'Bob',
+          filePath: 'assets/audio/song_a.mp3',
+          duration: Duration(minutes: 3, seconds: 14),
+        );
+        const differentFilePath = Track(
+          title: 'Song A',
+          from: 'Alice',
+          filePath: 'assets/audio/other.mp3',
+          duration: Duration(minutes: 3, seconds: 14),
+        );
+        const differentDuration = Track(
+          title: 'Song A',
+          from: 'Alice',
+          filePath: 'assets/audio/song_a.mp3',
+          duration: Duration(minutes: 4),
+        );
 
-      expect(a == differentTitle, isFalse);
-      expect(a == differentFrom, isFalse);
-      expect(a == differentFilePath, isFalse);
-      expect(a == differentDuration, isFalse);
-    });
+        expect(a == differentTitle, isFalse);
+        expect(a == differentFrom, isFalse);
+        expect(a == differentFilePath, isFalse);
+        expect(a == differentDuration, isFalse);
+      },
+    );
 
     test('toString contains class name and identifying fields', () {
       const track = Track(

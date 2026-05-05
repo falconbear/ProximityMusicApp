@@ -41,7 +41,7 @@ void main() {
 
   group('TrackChunk', () {
     test('preserves sequence, payload, and isLast', () {
-      final chunk = TrackChunk(
+      final chunk = const TrackChunk(
         sequence: 0,
         payload: const [1, 2, 3, 4],
         isLast: false,
@@ -51,7 +51,7 @@ void main() {
       expect(chunk.payload, [1, 2, 3, 4]);
       expect(chunk.isLast, isFalse);
 
-      final last = TrackChunk(
+      final last = const TrackChunk(
         sequence: 7,
         payload: const [9, 9],
         isLast: true,

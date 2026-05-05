@@ -12,6 +12,7 @@ import 'package:proximity_music_app/presentation/pages/onboarding/permissions_pa
 import 'package:proximity_music_app/presentation/pages/onboarding/privacy_battery_page.dart';
 import 'package:proximity_music_app/presentation/pages/onboarding/welcome_page.dart';
 import 'package:proximity_music_app/presentation/pages/player_page.dart';
+import 'package:proximity_music_app/presentation/pages/session_page.dart';
 import 'package:proximity_music_app/presentation/pages/settings_page.dart';
 import 'package:proximity_music_app/presentation/state/onboarding_providers.dart';
 
@@ -57,6 +58,10 @@ class ProximityMusicApp extends ConsumerWidget {
         GoRoute(
           path: '/player',
           builder: (context, state) => const PlayerPage(),
+        ),
+        GoRoute(
+          path: '/session',
+          builder: (context, state) => const SessionPage(),
         ),
         GoRoute(
           path: '/settings',

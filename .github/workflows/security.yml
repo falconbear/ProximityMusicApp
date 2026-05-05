@@ -15,6 +15,11 @@ on:
 
 permissions:
   contents: read
+  # gitleaks-action v2.3.x calls the PR commits API to scope its scan; without
+  # pull-requests:read the action fails with HTTP 403 "Resource not accessible
+  # by integration". Older v2.x didn't need this; the requirement appeared
+  # mid-version and is easy to miss until you pin to a recent SHA.
+  pull-requests: read
 
 jobs:
   gitleaks:
@@ -23,7 +28,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v2
+      # Pinned to v2.3.9 SHA to prevent supply-chain compromise of the
+      # third-party action. Bump deliberately; do not move to a mutable tag.
+      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7  # v2.3.9
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

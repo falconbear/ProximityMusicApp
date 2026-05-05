@@ -14,9 +14,14 @@ dependencies:
   just_audio: ^0.9.36
   audio_session: ^0.1.19
   audio_service: ^0.18.12
+  # Sprint 04 (Issue #4): used by StubKeyExchange for the MVP placeholder
+  # sha256-based shared-secret derivation.
+  # Sprint 05 (Issue #5): cryptography for AES-GCM payload decryption.
+  # Real ECDH (X25519) lands in a later sprint via flutter/services +
+  # native crypto.
   crypto: ^3.0.3
   cryptography: ^2.7.0
-  # TODO: add platform channel packages after PoC (e.g., pigeon)
+  # TODO: add platform channel packages after PoC
 
 dev_dependencies:
   flutter_test:

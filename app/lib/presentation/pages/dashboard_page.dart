@@ -88,6 +88,7 @@ class DashboardPage extends ConsumerWidget {
                     ),
                   ],
                 ),
+              ),
             ),
           ],
         ),

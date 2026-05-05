@@ -6,9 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:proximity_music_app/domain/entities/permission.dart';
 import 'package:proximity_music_app/domain/entities/track.dart';
+import 'package:proximity_music_app/presentation/state/onboarding_providers.dart';
 import 'package:proximity_music_app/presentation/state/providers.dart';
 import 'package:proximity_music_app/presentation/widgets/mini_player.dart';
+import 'package:proximity_music_app/presentation/widgets/permission_denied_banner.dart';
 
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
@@ -18,6 +21,8 @@ class DashboardPage extends ConsumerWidget {
     final discoveryOn = ref.watch(discoveryProvider);
     final nowPlaying = ref.watch(nowPlayingProvider);
     final queue = ref.watch(queueProvider);
+    final permissionStatuses = ref.watch(permissionStatusesProvider);
+    final bluetoothStatus = permissionStatuses[AppPermission.bluetooth];
 
     return Scaffold(
       appBar: AppBar(
@@ -45,42 +50,53 @@ class DashboardPage extends ConsumerWidget {
             stops: [0.0, 0.3],
           ),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHero(context, ref, discoveryOn, queue),
-              const Text(
-                'Now Playing',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (bluetoothStatus == PermissionStatus.denied)
+              const PermissionDeniedBanner()
+            else
+              const SizedBox.shrink(),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHero(context, ref, discoveryOn, queue),
+                    const Text(
+                      'Now Playing',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    if (nowPlaying != null)
+                      _NowPlayingCard(track: nowPlaying)
+                    else
+                      _EmptyNowPlaying(),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Up Next',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: queue.isEmpty
+                          ? _EmptyQueue()
+                          : _QueueList(queue: queue),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 12),
-              if (nowPlaying != null)
-                _NowPlayingCard(track: nowPlaying)
-              else
-                _EmptyNowPlaying(),
-              const SizedBox(height: 24),
-              const Text(
-                'Up Next',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Expanded(
-                child: queue.isEmpty
-                    ? _EmptyQueue()
-                    : _QueueList(queue: queue),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
       floatingActionButton: discoveryOn

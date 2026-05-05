@@ -1,1 +1,12 @@
 {"ts": "2026-04-29T10:25:56Z", "actor": "controller", "event": "issue_initialized", "issue_id": "2", "data": {"title": "オンボーディング + 権限取得 + 利用規約同意フロー", "branch": "sprint/02-onboarding-and-consent"}}
+{"ts": "2026-04-29T20:02:41Z", "actor": "generator", "event": "contract_submitted", "issue_id": "2", "from_state": "PLANNED", "to_state": "CONTRACT_REVIEW", "data": {"attempt": 1}}
+{"ts": "2026-04-29T20:09:20Z", "actor": "evaluator", "event": "contract_rejected", "issue_id": "2", "from_state": "CONTRACT_REVIEW", "to_state": "PLANNED", "data": {"attempt": 1, "feedback_ref": "docs/feedback/issue-2-contract.md"}}
+{"ts": "2026-04-29T20:25:10Z", "actor": "generator", "event": "contract_submitted", "issue_id": "2", "from_state": "PLANNED", "to_state": "CONTRACT_REVIEW", "data": {"attempt": 2}}
+{"ts": "2026-04-29T20:36:43Z", "actor": "evaluator", "event": "contract_approved", "issue_id": "2", "from_state": "CONTRACT_REVIEW", "to_state": "CONTRACT_APPROVED", "data": {"feedback_ref": "docs/feedback/issue-2-contract.md"}}
+{"ts": "2026-04-29T20:42:37Z", "actor": "generator", "event": "tdd_red_recorded", "issue_id": "2", "data": {"commit_sha": "17722cfab60a7b1db53f4c0d02db6494aec2452d", "phase": "red"}}
+{"ts": "2026-04-29T20:55:05Z", "actor": "generator", "event": "tdd_green_recorded", "issue_id": "2", "data": {"commit_sha": "7d11d6301d105bf1a8df988e6cc0626ca814728a", "phase": "green"}}
+{"ts": "2026-04-29T21:01:25Z", "actor": "generator", "event": "implementation_submitted", "issue_id": "2", "to_state": "READY_FOR_REVIEW", "data": {"attempt": 1}}
+{"ts": "2026-04-29T21:11:19Z", "actor": "evaluator", "event": "implementation_needs_fix", "issue_id": "2", "from_state": "READY_FOR_REVIEW", "to_state": "NEEDS_FIX", "data": {"qa_ref": ".ai/work/2/qa.json", "feedback_ref": "docs/feedback/issue-2.md"}}
+{"ts": "2026-04-29T21:29:20Z", "actor": "generator", "event": "implementation_submitted", "issue_id": "2", "to_state": "READY_FOR_REVIEW", "data": {"attempt": 2}}
+{"ts": "2026-04-29T21:36:30Z", "actor": "parent", "event": "pr_opened", "issue_id": "2", "data": {"pr_number": 13, "project_item_id": null}}
+{"ts": "2026-04-29T21:47:45Z", "actor": "evaluator", "event": "implementation_passed", "issue_id": "2", "from_state": "READY_FOR_REVIEW", "to_state": "PASSED", "data": {"qa_ref": ".ai/work/2/qa.json", "feedback_ref": "docs/feedback/issue-2.md"}}

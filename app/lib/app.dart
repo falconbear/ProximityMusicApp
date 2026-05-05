@@ -1,18 +1,58 @@
 // Application root + router configuration.
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:proximity_music_app/domain/entities/consent_record.dart';
+import 'package:proximity_music_app/domain/entities/onboarding_status.dart';
 import 'package:proximity_music_app/presentation/pages/dashboard_page.dart';
 import 'package:proximity_music_app/presentation/pages/discover_page.dart';
+import 'package:proximity_music_app/presentation/pages/onboarding/consent_page.dart';
+import 'package:proximity_music_app/presentation/pages/onboarding/permissions_page.dart';
+import 'package:proximity_music_app/presentation/pages/onboarding/privacy_battery_page.dart';
+import 'package:proximity_music_app/presentation/pages/onboarding/welcome_page.dart';
 import 'package:proximity_music_app/presentation/pages/player_page.dart';
+import 'package:proximity_music_app/presentation/pages/settings_page.dart';
+import 'package:proximity_music_app/presentation/state/onboarding_providers.dart';
 
-class ProximityMusicApp extends StatelessWidget {
+class ProximityMusicApp extends ConsumerWidget {
   const ProximityMusicApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final router = GoRouter(
+      initialLocation: '/',
+      redirect: (context, state) {
+        final onboarding = ref.read(onboardingStateProvider);
+        final service = ref.read(onboardingServiceProvider);
+        // Reconsent only fires *after* a previous consent was recorded; a
+        // pristine `consent == null` user is in first-run onboarding and
+        // should reach the Welcome page instead. We therefore delegate to
+        // OnboardingService.needsReconsent only when consent != null.
+        final consent = onboarding.consent;
+        final reconsent =
+            consent != null && service.needsReconsent(currentTermsVersion);
+
+        // Stuck redirect: in reconsent mode every path resolves to
+        // /onboarding/consent.
+        if (reconsent) {
+          if (state.matchedLocation == '/onboarding/consent') {
+            return null;
+          }
+          return '/onboarding/consent';
+        }
+
+        // First-run / partial onboarding -> Welcome.
+        if (onboarding.status != OnboardingStatus.completed) {
+          if (state.matchedLocation.startsWith('/onboarding/')) {
+            return null;
+          }
+          return '/onboarding/welcome';
+        }
+
+        return null;
+      },
       routes: [
         GoRoute(path: '/', builder: (context, state) => const DashboardPage()),
         GoRoute(
@@ -23,15 +63,25 @@ class ProximityMusicApp extends StatelessWidget {
           path: '/discover',
           builder: (context, state) => const DiscoverPage(),
         ),
-        // '/settings' route — placeholder so the route exists on this
-        // branch even before Issue #2 (onboarding + permissions) is
-        // merged. When Issue #2 lands, the real SettingsPage will
-        // replace this builder. Kept inline (no new file) to avoid
-        // colliding with Issue #2's app/lib/presentation/pages/
-        // settings_page.dart.
         GoRoute(
           path: '/settings',
-          builder: (context, state) => const _SettingsPlaceholder(),
+          builder: (context, state) => const SettingsPage(),
+        ),
+        GoRoute(
+          path: '/onboarding/welcome',
+          builder: (context, state) => const WelcomePage(),
+        ),
+        GoRoute(
+          path: '/onboarding/privacy-battery',
+          builder: (context, state) => const PrivacyBatteryPage(),
+        ),
+        GoRoute(
+          path: '/onboarding/permissions',
+          builder: (context, state) => const PermissionsPage(),
+        ),
+        GoRoute(
+          path: '/onboarding/consent',
+          builder: (context, state) => const ConsentPage(),
         ),
       ],
     );
@@ -76,23 +126,6 @@ class ProximityMusicApp extends StatelessWidget {
         ),
       ),
       routerConfig: router,
-    );
-  }
-}
-
-class _SettingsPlaceholder extends StatelessWidget {
-  const _SettingsPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
-      body: const Center(
-        child: Text(
-          'Settings will arrive with Issue #2.',
-          style: TextStyle(color: Colors.white70),
-        ),
-      ),
     );
   }
 }

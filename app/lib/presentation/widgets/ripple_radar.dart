@@ -7,11 +7,7 @@
 import 'package:flutter/material.dart';
 
 class RippleRadarView extends StatefulWidget {
-  const RippleRadarView({
-    super.key,
-    required this.active,
-    this.size = 200,
-  });
+  const RippleRadarView({super.key, required this.active, this.size = 200});
 
   final bool active;
   final double size;

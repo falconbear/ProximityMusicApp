@@ -14,10 +14,7 @@ class ProximityMusicApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final router = GoRouter(
       routes: [
-        GoRoute(
-          path: '/',
-          builder: (context, state) => const DashboardPage(),
-        ),
+        GoRoute(path: '/', builder: (context, state) => const DashboardPage()),
         GoRoute(
           path: '/player',
           builder: (context, state) => const PlayerPage(),

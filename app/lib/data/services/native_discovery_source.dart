@@ -24,12 +24,13 @@ class NativeDiscoverySource implements DiscoverySource {
     MethodChannel? method,
     EventChannel? peerEvents,
     EventChannel? btEvents,
-  })  : _method =
-            method ?? const MethodChannel('proximity_music_app/discovery'),
-        _peerEvents = peerEvents ??
-            const EventChannel('proximity_music_app/discovery/peers'),
-        _btEvents = btEvents ??
-            const EventChannel('proximity_music_app/discovery/bt_state');
+  }) : _method = method ?? const MethodChannel('proximity_music_app/discovery'),
+       _peerEvents =
+           peerEvents ??
+           const EventChannel('proximity_music_app/discovery/peers'),
+       _btEvents =
+           btEvents ??
+           const EventChannel('proximity_music_app/discovery/bt_state');
 
   final MethodChannel _method;
   final EventChannel _peerEvents;
@@ -40,11 +41,13 @@ class NativeDiscoverySource implements DiscoverySource {
 
   @override
   Stream<Peer> get peerStream {
-    return _peerStream ??=
-        _peerEvents.receiveBroadcastStream().map(_decodePeer).handleError((_) {
-      // Native PoC stub may not emit anything; surface no peers
-      // rather than crashing.
-    });
+    return _peerStream ??= _peerEvents
+        .receiveBroadcastStream()
+        .map(_decodePeer)
+        .handleError((_) {
+          // Native PoC stub may not emit anything; surface no peers
+          // rather than crashing.
+        });
   }
 
   @override
@@ -74,7 +77,8 @@ class NativeDiscoverySource implements DiscoverySource {
   Peer _decodePeer(dynamic event) {
     final map = (event as Map).cast<String, dynamic>();
     final id = map['id'] as String? ?? '';
-    final lastSeen = map['lastSeenAtMs'] as int? ??
+    final lastSeen =
+        map['lastSeenAtMs'] as int? ??
         DateTime.now().toUtc().millisecondsSinceEpoch;
     final seed = map['avatarSeed'] as int? ?? 0;
     return Peer(

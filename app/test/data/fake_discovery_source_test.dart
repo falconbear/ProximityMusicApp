@@ -81,15 +81,20 @@ void main() {
       });
     });
 
-    test('currentBluetoothState returns the constructor-provided value',
-        () async {
-      final source = FakeDiscoverySource(
-        initialBluetoothState: BluetoothState.unauthorized,
-        peers: const [],
-        interval: const Duration(seconds: 5),
-      );
+    test(
+      'currentBluetoothState returns the constructor-provided value',
+      () async {
+        final source = FakeDiscoverySource(
+          initialBluetoothState: BluetoothState.unauthorized,
+          peers: const [],
+          interval: const Duration(seconds: 5),
+        );
 
-      expect(await source.currentBluetoothState(), BluetoothState.unauthorized);
-    });
+        expect(
+          await source.currentBluetoothState(),
+          BluetoothState.unauthorized,
+        );
+      },
+    );
   });
 }

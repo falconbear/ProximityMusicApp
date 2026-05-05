@@ -94,8 +94,7 @@ class _DiscoverBody extends ConsumerWidget {
   final List<Peer> peers;
 
   bool get _scanning =>
-      status == DiscoveryStatus.scanning ||
-      status == DiscoveryStatus.starting;
+      status == DiscoveryStatus.scanning || status == DiscoveryStatus.starting;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

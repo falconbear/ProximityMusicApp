@@ -25,14 +25,14 @@ class DiscoveryController {
     void Function(DateTime now, Duration ttl)? onPrune,
     Duration pruneInterval = const Duration(seconds: 10),
     Duration peerTtl = const Duration(seconds: 60),
-  })  : _source = source,
-        _onPeer = onPeer,
-        _onBluetoothState = onBluetoothState,
-        _onStatus = onStatus,
-        _now = now,
-        _onPrune = onPrune,
-        _pruneInterval = pruneInterval,
-        _peerTtl = peerTtl;
+  }) : _source = source,
+       _onPeer = onPeer,
+       _onBluetoothState = onBluetoothState,
+       _onStatus = onStatus,
+       _now = now,
+       _onPrune = onPrune,
+       _pruneInterval = pruneInterval,
+       _peerTtl = peerTtl;
 
   final DiscoverySource _source;
   final void Function(Peer) _onPeer;

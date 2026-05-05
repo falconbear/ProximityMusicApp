@@ -4,10 +4,4 @@
 // session. The DiscoveryController in the Presentation layer drives
 // this state in response to events from a DiscoverySource.
 
-enum DiscoveryStatus {
-  idle,
-  starting,
-  scanning,
-  stopped,
-  error,
-}
+enum DiscoveryStatus { idle, starting, scanning, stopped, error }

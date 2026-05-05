@@ -51,46 +51,38 @@ void main() {
           const DiscoverPage(),
           overrides: [
             discoverySourceProvider.overrideWithValue(_makeSource()),
-            bluetoothStateProvider
-                .overrideWith((ref) => BluetoothState.on),
+            bluetoothStateProvider.overrideWith((ref) => BluetoothState.on),
           ],
         ),
       );
       await tester.pump();
 
-      expect(
-        find.text('周囲に誰もいません。場所を変えてみてください'),
-        findsOneWidget,
-      );
+      expect(find.text('周囲に誰もいません。場所を変えてみてください'), findsOneWidget);
     },
   );
 
-  testWidgets(
-    'shows Bluetooth-off error copy when Bluetooth state is off',
-    (tester) async {
-      await tester.pumpWidget(
-        _wrap(
-          const DiscoverPage(),
-          overrides: [
-            discoverySourceProvider.overrideWithValue(
-              _makeSource(bt: BluetoothState.off),
-            ),
-            bluetoothStateProvider
-                .overrideWith((ref) => BluetoothState.off),
-          ],
-        ),
-      );
-      await tester.pump();
+  testWidgets('shows Bluetooth-off error copy when Bluetooth state is off', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        const DiscoverPage(),
+        overrides: [
+          discoverySourceProvider.overrideWithValue(
+            _makeSource(bt: BluetoothState.off),
+          ),
+          bluetoothStateProvider.overrideWith((ref) => BluetoothState.off),
+        ],
+      ),
+    );
+    await tester.pump();
 
-      expect(
-        find.text('Bluetooth が無効です。設定を確認してください'),
-        findsOneWidget,
-      );
-    },
-  );
+    expect(find.text('Bluetooth が無効です。設定を確認してください'), findsOneWidget);
+  });
 
-  testWidgets('summary shows "2 台検知中" when registry has 2 peers',
-      (tester) async {
+  testWidgets('summary shows "2 台検知中" when registry has 2 peers', (
+    tester,
+  ) async {
     final t = DateTime.utc(2026, 5, 1, 12, 0, 0);
     final registry = PeerRegistry()
       ..upsert(Peer(id: 'a', lastSeenAt: t, avatarSeed: 1))
@@ -103,8 +95,9 @@ void main() {
           discoverySourceProvider.overrideWithValue(_makeSource()),
           bluetoothStateProvider.overrideWith((ref) => BluetoothState.on),
           peerRegistryProvider.overrideWith((ref) => registry),
-          discoveryStatusProvider
-              .overrideWith((ref) => DiscoveryStatus.scanning),
+          discoveryStatusProvider.overrideWith(
+            (ref) => DiscoveryStatus.scanning,
+          ),
         ],
       ),
     );
@@ -121,8 +114,7 @@ void main() {
           const DiscoverPage(),
           overrides: [
             discoverySourceProvider.overrideWithValue(_makeSource()),
-            bluetoothStateProvider
-                .overrideWith((ref) => BluetoothState.on),
+            bluetoothStateProvider.overrideWith((ref) => BluetoothState.on),
           ],
         ),
       );
@@ -149,8 +141,9 @@ void main() {
     },
   );
 
-  testWidgets('renders one PeerListTile per peer in the registry',
-      (tester) async {
+  testWidgets('renders one PeerListTile per peer in the registry', (
+    tester,
+  ) async {
     final t = DateTime.utc(2026, 5, 1, 12, 0, 0);
     final registry = PeerRegistry()
       ..upsert(Peer(id: 'peer-aaa00001', lastSeenAt: t, avatarSeed: 7));
@@ -162,8 +155,9 @@ void main() {
           discoverySourceProvider.overrideWithValue(_makeSource()),
           bluetoothStateProvider.overrideWith((ref) => BluetoothState.on),
           peerRegistryProvider.overrideWith((ref) => registry),
-          discoveryStatusProvider
-              .overrideWith((ref) => DiscoveryStatus.scanning),
+          discoveryStatusProvider.overrideWith(
+            (ref) => DiscoveryStatus.scanning,
+          ),
         ],
       ),
     );

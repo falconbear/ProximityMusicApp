@@ -13,11 +13,7 @@ void main() {
   group('Peer entity', () {
     test('constructor preserves id, lastSeenAt, avatarSeed', () {
       final t = DateTime.utc(2026, 5, 1, 12, 0, 0);
-      final peer = Peer(
-        id: 'peer-001',
-        lastSeenAt: t,
-        avatarSeed: 42,
-      );
+      final peer = Peer(id: 'peer-001', lastSeenAt: t, avatarSeed: 42);
 
       expect(peer.id, 'peer-001');
       expect(peer.lastSeenAt, t);
@@ -27,11 +23,7 @@ void main() {
     test('copyWith updates lastSeenAt while preserving other fields', () {
       final t1 = DateTime.utc(2026, 5, 1, 12, 0, 0);
       final t2 = DateTime.utc(2026, 5, 1, 12, 0, 30);
-      final peer = Peer(
-        id: 'peer-001',
-        lastSeenAt: t1,
-        avatarSeed: 42,
-      );
+      final peer = Peer(id: 'peer-001', lastSeenAt: t1, avatarSeed: 42);
 
       final updated = peer.copyWith(lastSeenAt: t2);
 

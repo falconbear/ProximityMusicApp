@@ -5,9 +5,4 @@
 // platform-specific state codes into this enum before crossing the
 // Platform Channel boundary.
 
-enum BluetoothState {
-  unknown,
-  off,
-  on,
-  unauthorized,
-}
+enum BluetoothState { unknown, off, on, unauthorized }

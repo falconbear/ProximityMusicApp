@@ -7,16 +7,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:proximity_music_app/main.dart';
 
 void main() {
-  testWidgets('App smoke test - loads without crashing', (WidgetTester tester) async {
+  testWidgets('App smoke test - loads without crashing', (
+    WidgetTester tester,
+  ) async {
     // Build our app and trigger a frame.
     await tester.pumpWidget(const ProviderScope(child: ProximityMusicApp()));
 
     // Verify that the app title is displayed.
     expect(find.text('Proximity Music'), findsOneWidget);
-    
+
     // Verify that discovery section is displayed.
     expect(find.text('Discovery Paused'), findsOneWidget);
-    
+
     // Verify that the discovery switch exists.
     expect(find.byType(Switch), findsOneWidget);
   });
@@ -30,7 +32,7 @@ void main() {
 
     // Initially should show 'Discovery Paused'
     expect(find.text('Discovery Paused'), findsOneWidget);
-    
+
     // Tap the switch to turn on discovery
     await tester.tap(switchWidget);
     await tester.pump();

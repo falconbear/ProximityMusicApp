@@ -131,12 +131,17 @@ jobs:
           results='${{ toJSON(needs) }}'
           echo "$results"
           # Hard fail on any explicit failure or cancellation.
-          if echo "$results" | grep -q '"result":"failure"'; then exit 1; fi
-          if echo "$results" | grep -q '"result":"cancelled"'; then exit 1; fi
+          # toJSON(needs) emits `"result": "success"` (space after colon),
+          # so the grep pattern must allow optional whitespace. Without
+          # [[:space:]]*, the success path never matches and the aggregate
+          # always falls through to the `no language job succeeded` error
+          # — meaning a green PR was structurally impossible.
+          if echo "$results" | grep -qE '"result":[[:space:]]*"failure"';   then exit 1; fi
+          if echo "$results" | grep -qE '"result":[[:space:]]*"cancelled"'; then exit 1; fi
           # If a language was detected, require at least one success
           # (otherwise "all skipped" would silently mark the PR green).
           if [ "$any" = "true" ]; then
-            if ! echo "$results" | grep -q '"result":"success"'; then
+            if ! echo "$results" | grep -qE '"result":[[:space:]]*"success"'; then
               echo "ERROR: language detected but no language job succeeded" >&2
               exit 1
             fi

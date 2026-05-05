@@ -144,7 +144,10 @@ void main() {
   testWidgets('renders one PeerListTile per peer in the registry', (
     tester,
   ) async {
-    final t = DateTime.utc(2026, 5, 1, 12, 0, 0);
+    // Use DateTime.now() so the relative-time label is "たった今" regardless
+    // of when CI runs (the original UTC literal goes stale once that date
+    // moves into the past).
+    final t = DateTime.now();
     final registry = PeerRegistry()
       ..upsert(Peer(id: 'peer-aaa00001', lastSeenAt: t, avatarSeed: 7));
 

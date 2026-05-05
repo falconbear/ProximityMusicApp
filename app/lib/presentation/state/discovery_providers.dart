@@ -76,6 +76,12 @@ final discoveryControllerProvider = Provider<DiscoveryController>((ref) {
     },
     now: () => DateTime.now().toUtc(),
   );
+  // Stop pending streams + timers when the provider container is disposed,
+  // otherwise the periodic prune timer leaks across test boundaries and
+  // flutter_test fails the test with "Pending timers".
+  ref.onDispose(() {
+    controller.stop();
+  });
   return controller;
 });
 

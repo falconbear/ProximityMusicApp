@@ -5,3 +5,4 @@
 {"ts": "2026-05-05T14:44:36Z", "actor": "generator", "event": "tdd_green_recorded", "issue_id": "6", "data": {"commit_sha": "3570e0db132849268a6c14b294f9d662dc38c6dc", "phase": "green"}}
 {"ts": "2026-05-05T14:49:13Z", "actor": "generator", "event": "implementation_submitted", "issue_id": "6", "to_state": "READY_FOR_REVIEW", "data": {"attempt": 1}}
 {"ts": "2026-05-05T14:54:51Z", "actor": "evaluator", "event": "implementation_passed", "issue_id": "6", "from_state": "READY_FOR_REVIEW", "to_state": "PASSED", "data": {"qa_ref": ".ai/work/6/qa.json", "feedback_ref": "docs/feedback/issue-6.md"}}
+{"ts": "2026-05-05T14:55:58Z", "actor": "parent", "event": "pr_opened", "issue_id": "6", "data": {"pr_number": 19, "project_item_id": null}}

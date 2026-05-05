@@ -18,7 +18,7 @@ dependencies:
   # sha256-based shared-secret derivation. Real ECDH (X25519) lands in
   # Issue #5+ via flutter/services + native crypto.
   crypto: ^3.0.3
-  # TODO: add platform channel packages after PoC (e.g., pigeon)
+  # TODO: add platform channel packages after PoC
 
 dev_dependencies:
   flutter_test:

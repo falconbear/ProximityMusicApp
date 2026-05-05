@@ -1,1 +1,10 @@
 {"ts": "2026-04-29T10:25:56Z", "actor": "controller", "event": "issue_initialized", "issue_id": "5", "data": {"title": "P2P 楽曲転送 (チャンク受信 + 暗号化 + 整合性)", "branch": "sprint/05-p2p-transfer"}}
+{"ts": "2026-05-05T11:55:19Z", "actor": "generator", "event": "contract_submitted", "issue_id": "5", "from_state": "PLANNED", "to_state": "CONTRACT_REVIEW", "data": {"attempt": 1}}
+{"ts": "2026-05-05T11:59:55Z", "actor": "evaluator", "event": "contract_rejected", "issue_id": "5", "from_state": "CONTRACT_REVIEW", "to_state": "PLANNED", "data": {"attempt": 1, "feedback_ref": "docs/feedback/issue-5-contract.md"}}
+{"ts": "2026-05-05T12:02:19Z", "actor": "generator", "event": "contract_submitted", "issue_id": "5", "from_state": "PLANNED", "to_state": "CONTRACT_REVIEW", "data": {"attempt": 2}}
+{"ts": "2026-05-05T12:04:52Z", "actor": "evaluator", "event": "contract_approved", "issue_id": "5", "from_state": "CONTRACT_REVIEW", "to_state": "CONTRACT_APPROVED", "data": {"feedback_ref": "docs/feedback/issue-5-contract.md"}}
+{"ts": "2026-05-05T12:08:53Z", "actor": "generator", "event": "tdd_red_recorded", "issue_id": "5", "data": {"commit_sha": "6e8422c675d6f9457526f8480257a67a15fb418f", "phase": "red"}}
+{"ts": "2026-05-05T14:15:35Z", "actor": "generator", "event": "tdd_green_recorded", "issue_id": "5", "data": {"commit_sha": "0b3351336de4edf6aeda868f5c7bf7a60dd92aab", "phase": "green"}}
+{"ts": "2026-05-05T14:18:40Z", "actor": "generator", "event": "implementation_submitted", "issue_id": "5", "to_state": "READY_FOR_REVIEW", "data": {"attempt": 1}}
+{"ts": "2026-05-05T14:23:24Z", "actor": "evaluator", "event": "implementation_passed", "issue_id": "5", "from_state": "READY_FOR_REVIEW", "to_state": "PASSED", "data": {"qa_ref": ".ai/work/5/qa.json", "feedback_ref": "docs/feedback/issue-5.md"}}
+{"ts": "2026-05-05T14:24:42Z", "actor": "parent", "event": "pr_opened", "issue_id": "5", "data": {"pr_number": 18, "project_item_id": null}}

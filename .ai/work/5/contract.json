@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "issue_id": "5",
   "status": "review",
-  "locked": false,
+  "locked": true,
   "approved_at": null,
   "approved_by": null,
   "scope": [

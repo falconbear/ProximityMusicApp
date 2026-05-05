@@ -3,23 +3,23 @@
   "issue_id": "2",
   "title": "オンボーディング + 権限取得 + 利用規約同意フロー",
   "branch": "sprint/02-onboarding-and-consent",
-  "pr_number": null,
+  "pr_number": 13,
   "project_item_id": null,
-  "current_state": "PLANNED",
-  "previous_state": null,
-  "last_transition_at": null,
-  "last_transition_by": null,
-  "contract_attempts": 0,
-  "attempts": 0,
+  "current_state": "PASSED",
+  "previous_state": "READY_FOR_REVIEW",
+  "last_transition_at": "2026-04-29T21:47:45Z",
+  "last_transition_by": "evaluator",
+  "contract_attempts": 2,
+  "attempts": 2,
   "tdd": {
-    "red_commit_sha": null,
-    "green_commit_sha": null,
+    "red_commit_sha": "17722cfab60a7b1db53f4c0d02db6494aec2452d",
+    "green_commit_sha": "7d11d6301d105bf1a8df988e6cc0626ca814728a",
     "refactor_commit_sha": null
   },
   "blocked_reason": null,
   "blocked_note": null,
   "timestamps": {
     "created_at": "2026-04-29T10:25:56Z",
-    "updated_at": "2026-04-29T10:25:56Z"
+    "updated_at": "2026-04-29T21:47:45Z"
   }
 }

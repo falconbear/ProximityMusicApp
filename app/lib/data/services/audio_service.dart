@@ -12,6 +12,7 @@ import 'dart:developer' as developer;
 import 'package:just_audio/just_audio.dart';
 
 import 'package:proximity_music_app/domain/entities/track.dart';
+import 'package:proximity_music_app/domain/playback/audio_gateway.dart';
 
 /// Callback type aliases for state plumbing. These are deliberately defined
 /// on Domain types only (no Riverpod / Flutter imports).
@@ -22,7 +23,7 @@ typedef NowPlayingChanged = void Function(Track? track);
 typedef QueueRead = List<Track> Function();
 typedef QueueWrite = void Function(List<Track> queue);
 
-class AudioService {
+class AudioService implements AudioGateway {
   AudioService(
     this.player, {
     required this.onPlayingChanged,
@@ -41,6 +42,7 @@ class AudioService {
   final QueueRead readQueue;
   final QueueWrite writeQueue;
 
+  @override
   Future<void> play(Track track) async {
     try {
       await player.setAsset(track.filePath);
@@ -76,6 +78,7 @@ class AudioService {
     onPlayingChanged(true);
   }
 
+  @override
   Future<void> stop() async {
     await player.stop();
     onPlayingChanged(false);
